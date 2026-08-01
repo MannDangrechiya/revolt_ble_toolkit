@@ -23,6 +23,9 @@ htmlcov/
 # Logs (keep the directory, ignore generated files)
 logs/*.log
 
+# Generated capture reports
+reports/
+
 # Editors
 .vscode/
 .idea/

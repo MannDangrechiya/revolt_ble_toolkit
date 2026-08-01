@@ -32,9 +32,13 @@ dev = [
     "pytest>=8.3.0",
     "pytest-cov>=5.0.0",
 ]
+gui = [
+    "PySide6>=6.7.0",
+]
 
 [project.scripts]
 revolt-ble-toolkit = "revolt_ble_toolkit.cli.main:main"
+revolt-ble-gui = "revolt_ble_toolkit.gui.app:main"
 
 [project.urls]
 Repository = "https://example.com/revolt-ble-toolkit"
@@ -59,12 +63,18 @@ dev-dependencies = [
 line-length = 100
 target-version = "py312"
 src = ["src", "tests"]
+extend-exclude = ["scratch"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "RUF"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["revolt_ble_toolkit"]
+
+[tool.ruff.lint.per-file-ignores]
+# Qt requires overriding its camelCase virtual methods (rowCount, paintEvent,
+# dragEnterEvent, ...) verbatim; they can't be renamed to snake_case.
+"src/revolt_ble_toolkit/gui/*.py" = ["N802"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -74,6 +84,7 @@ quote-style = "double"
 [tool.black]
 line-length = 100
 target-version = ["py312"]
+extend-exclude = "^/scratch/"
 
 # --- Mypy (static typing) --------------------------------------------------
 
