@@ -1,0 +1,14 @@
+[extend]
+# Layer on top of gitleaks' built-in ruleset rather than replacing it.
+useDefault = true
+
+[allowlist]
+description = "Docs that quote the known, already-tracked incident (see HISTORY_SANITIZATION.md) as historical evidence, not a live secret"
+paths = [
+    '''HISTORY_SANITIZATION\.md''',
+    '''CLEANUP_REPORT\.md''',
+    '''RELEASE_CHECKLIST\.md''',
+    '''SECURITY_RELEASE_CHECKLIST\.md''',
+    '''FINAL_RELEASE_VERIFICATION\.md''',
+    '''CHANGELOG\.md''',
+]

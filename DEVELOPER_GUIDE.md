@@ -7,7 +7,11 @@ uv sync --all-extras          # preferred
 # or
 python -m venv .venv && .venv\Scripts\activate
 pip install -e ".[dev,gui,live]"
+
+git config core.hooksPath .githooks   # activate the sensitive-data pre-commit hook (see below) — per-clone, not shared automatically
 ```
+
+Install [gitleaks](https://github.com/gitleaks/gitleaks) too if you want the secret scan to actually run locally (the hook above skips it with a warning if it's missing) — see [SECRETS_POLICY.md](SECRETS_POLICY.md).
 
 ## The verification gate
 

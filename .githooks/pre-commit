@@ -32,8 +32,16 @@ imei_pattern='[0-9]{14,16}'                # IMEI: 15 digits (14 SNR + Luhn chec
 iccid_pattern='89[0-9]{17,20}'             # ICCID: ITU E.118, always starts with 89
 token_pattern='PAIR[A-Za-z0-9+/=]{8,}'    # this repo's specific past incident pattern
 
+# Docs that quote the known, already-tracked incident as historical evidence
+# (same list as .gitleaks.toml's allowlist) — otherwise this hook blocks
+# committing the very documentation that explains the incident.
+doc_allowlist='^(HISTORY_SANITIZATION|CLEANUP_REPORT|RELEASE_CHECKLIST|SECURITY_RELEASE_CHECKLIST|FINAL_RELEASE_VERIFICATION|CHANGELOG)\.md$'
+
 while IFS= read -r f; do
     [ -z "$f" ] && continue
+    if echo "$f" | grep -qE "$doc_allowlist"; then
+        continue
+    fi
     if git diff --cached -- "$f" | grep -qI '^Binary files'; then
         continue
     fi
@@ -61,6 +69,23 @@ if [ "$blocked" -ne 0 ]; then
     echo "pattern. See HISTORY_SANITIZATION.md for why these patterns are blocked."
     echo "If you are certain this is a false positive: git commit --no-verify"
     exit 1
+fi
+
+# --- 3. Gitleaks (staged-diff secret scan) ---------------------------------
+# Optional locally — CI (.github/workflows/ci.yml) runs the real, mandatory
+# gitleaks check on every push/PR regardless of whether it's installed here.
+# Not hard-required locally so a missing binary can't brick every
+# contributor's commits; see SECRETS_POLICY.md for install instructions.
+if command -v gitleaks >/dev/null 2>&1; then
+    if ! gitleaks protect --staged --redact --verbose; then
+        echo
+        echo "Commit rejected: gitleaks found a likely secret in the staged changes."
+        echo "See SECRETS_POLICY.md. If certain this is a false positive, add an"
+        echo "allowlist entry to .gitleaks.toml rather than bypassing this check."
+        exit 1
+    fi
+else
+    echo "note: gitleaks not installed locally — skipping secret scan (CI still runs it). See SECRETS_POLICY.md."
 fi
 
 exit 0
