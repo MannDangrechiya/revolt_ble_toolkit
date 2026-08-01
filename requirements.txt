@@ -1,0 +1,8 @@
+# Runtime dependencies for revolt-ble-toolkit.
+#
+# The project foundation is stdlib-only (Python 3.12: tomllib, dataclasses,
+# argparse, logging, pathlib). Add packages here as parsing/analysis/export
+# modules are implemented in later milestones.
+#
+# Preferred install: uv sync
+# Fallback install:  pip install -r requirements.txt

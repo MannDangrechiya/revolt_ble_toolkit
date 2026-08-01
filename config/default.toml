@@ -1,0 +1,11 @@
+# Default configuration for revolt-ble-toolkit.
+# Any value here can be overridden by REVOLT_* environment variables,
+# e.g. REVOLT_DEBUG=true or REVOLT_LOGGING_LEVEL=DEBUG.
+
+environment = "development"
+debug = false
+
+[logging]
+level = "INFO"
+log_to_file = true
+log_file_name = "revolt_ble_toolkit.log"

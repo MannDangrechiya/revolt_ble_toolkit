@@ -1,0 +1,101 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "revolt-ble-toolkit"
+version = "0.1.0"
+description = "A professional toolkit for reverse engineering Bluetooth Low Energy traffic captured in Android HCI Snoop Logs."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Kunj", email = "kunj@printdeed.com" }]
+keywords = ["bluetooth", "ble", "hci", "snoop-log", "reverse-engineering", "android"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries",
+]
+
+# Runtime dependencies: none yet. The foundation is stdlib-only; parsing,
+# analysis, and export dependencies will be added as those modules land.
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.6.0",
+    "black>=24.8.0",
+    "mypy>=1.11.0",
+    "pytest>=8.3.0",
+    "pytest-cov>=5.0.0",
+]
+
+[project.scripts]
+revolt-ble-toolkit = "revolt_ble_toolkit.cli.main:main"
+
+[project.urls]
+Repository = "https://example.com/revolt-ble-toolkit"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/revolt_ble_toolkit"]
+
+# --- uv -----------------------------------------------------------------
+
+[tool.uv]
+dev-dependencies = [
+    "ruff>=0.6.0",
+    "black>=24.8.0",
+    "mypy>=1.11.0",
+    "pytest>=8.3.0",
+    "pytest-cov>=5.0.0",
+]
+
+# --- Ruff (lint + import sort) -------------------------------------------
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "RUF"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["revolt_ble_toolkit"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+# --- Black (formatter) ----------------------------------------------------
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+# --- Mypy (static typing) --------------------------------------------------
+
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "src"
+packages = ["revolt_ble_toolkit"]
+namespace_packages = true
+explicit_package_bases = true
+strict = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+# --- Pytest -----------------------------------------------------------------
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q --cov=revolt_ble_toolkit --cov-report=term-missing"
+testpaths = ["tests"]
+pythonpath = ["src"]
