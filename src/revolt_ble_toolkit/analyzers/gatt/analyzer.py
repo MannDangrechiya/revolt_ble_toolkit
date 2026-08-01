@@ -39,6 +39,18 @@ def _parse_uuid(data: bytes) -> str:
     return data.hex()  # ponytail: unexpected length, show raw hex rather than guessing
 
 
+def handle_uuid_map(services: Iterable[Service]) -> dict[int, str]:
+    """Flatten a discovered GATT hierarchy into {attribute handle: UUID}."""
+    mapping: dict[int, str] = {}
+    for service in services:
+        for char in service.characteristics:
+            mapping[char.declaration_handle] = char.uuid
+            mapping[char.value_handle] = char.uuid
+            for descriptor in char.descriptors:
+                mapping[descriptor.handle] = descriptor.uuid
+    return mapping
+
+
 @dataclass
 class _ServiceBuilder:
     start_handle: int

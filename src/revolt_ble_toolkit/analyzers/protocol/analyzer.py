@@ -23,7 +23,7 @@ from collections import Counter, defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 
-from revolt_ble_toolkit.analyzers.gatt import Service
+from revolt_ble_toolkit.analyzers.gatt import Service, handle_uuid_map
 from revolt_ble_toolkit.analyzers.protocol.models import ClassifiedPacket, PacketCategory
 from revolt_ble_toolkit.parsers.att import AttOpcode, AttPacket
 
@@ -68,7 +68,7 @@ class ProtocolAnalyzer:
         self, att_packets: Iterable[AttPacket], services: Iterable[Service] = ()
     ) -> list[ClassifiedPacket]:
         packets = list(att_packets)
-        handle_uuids = self._handle_uuids(services)
+        handle_uuids = handle_uuid_map(services)
 
         channels: dict[tuple[int, int], _Channel] = defaultdict(_Channel)
         channel_key_of: list[tuple[int, int] | None] = []
@@ -108,17 +108,6 @@ class ProtocolAnalyzer:
             )
             results.append(ClassifiedPacket(att, category, confidence, reason))
         return results
-
-    @staticmethod
-    def _handle_uuids(services: Iterable[Service]) -> dict[int, str]:
-        mapping: dict[int, str] = {}
-        for service in services:
-            for char in service.characteristics:
-                mapping[char.declaration_handle] = char.uuid
-                mapping[char.value_handle] = char.uuid
-                for descriptor in char.descriptors:
-                    mapping[descriptor.handle] = descriptor.uuid
-        return mapping
 
     @staticmethod
     def _classify_no_handle(att: AttPacket) -> tuple[PacketCategory, float, str]:
