@@ -14,8 +14,8 @@ All of it came from one committed script (`scratch/generate_all_outputs.py`) tha
 |---|---|---|
 | Real IMEI (`[REDACTED_IMEI]`) | `output/ascii_strings.txt`, `output/notifications.csv`, `output/packet_pairs.csv`, `output/telemetry_candidates.csv`, `output/protocol.md`, `scratch/generate_all_outputs.py` (as a worked example) | A device's IMEI is a permanent hardware identifier. Publishing it lets anyone associate this specific physical device with this GitHub account, and (with carrier cooperation or IMEI-tracking services) can be used to track or blocklist the device. |
 | Real SIM ICCID/serial (`[REDACTED_ICCID]`) | Same files as above | Tied to a specific mobile subscription/account. Combined with the IMEI and pairing token below, it narrows down a real person's real, currently-active mobile line. |
-| A real device pairing token (`[REDACTED_PAIRING_TOKEN]#`, base64-decodes to an 8-digit number — almost certainly a phone-number fragment used as the BLE pairing shared secret) | `output/write_requests.csv`, `output/packet_pairs.csv`, `output/protocol.md`, `output/summary.md`, `scratch/generate_all_outputs.py` | If still valid, this is a live credential — anyone who reads it can authenticate to the real vehicle over BLE within physical range. |
-| Local Windows username in a file path (`C:\Users\[REDACTED_USER]\Downloads\bugreport-m52xqins-TP1A.220624.014-2026-08-01-10-40-19\...`) | `scratch/generate_all_outputs.py`, `output/statistics.json`, `output/summary.md` | Minor alone, but combined with the above further identifies the maintainer as the device owner. |
+| A real device pairing token (`[REDACTED_PAIRING_TOKEN]`, base64-decodes to an 8-digit number — almost certainly a phone-number fragment used as the BLE pairing shared secret) | `output/write_requests.csv`, `output/packet_pairs.csv`, `output/protocol.md`, `output/summary.md`, `scratch/generate_all_outputs.py` | If still valid, this is a live credential — anyone who reads it can authenticate to the real vehicle over BLE within physical range. |
+| Local Windows username in a file path (`C:\Users\[REDACTED_USER]\Downloads\bugreport...`) | `scratch/generate_all_outputs.py`, `output/statistics.json`, `output/summary.md` | Minor alone, but combined with the above further identifies the maintainer as the device owner. |
 | Flat, unscored "fact" statements about decoded telemetry (e.g. "Battery Voltage: 18") | `output/protocol.md` | Not a privacy issue, but proof this script was never part of the reviewed, tested codebase — it directly violates the project's own confidence-scoring principle. |
 
 ## 2. Affected commits — re-verified fresh, unchanged since the last pass
@@ -142,12 +142,12 @@ git filter-repo \
 git log --all --oneline -- output output.zip scratch/generate_all_outputs.py
 # expect: no output
 
-# Content gone entirely — every literal from §1:
+# Content gone entirely — verify sensitive string patterns are gone:
 git log --all -S"[REDACTED_IMEI]" --oneline
 git log --all -S"[REDACTED_ICCID]" --oneline
-git log --all -S"PAIRODg2" --oneline
-git log --all -S"dipak\\Downloads" --oneline
-git log --all -S"bugreport-m52xqins" --oneline
+git log --all -S"[REDACTED_PAIRING_TOKEN]" --oneline
+git log --all -S"[REDACTED_USER]" --oneline
+git log --all -S"bugreport" --oneline
 # expect: no output for all five
 
 # Every branch still present, nothing silently dropped:
@@ -210,9 +210,9 @@ git fetch --all
 
 # Repeat every check from Step 6, against this fresh clone this time:
 git log --all --oneline -- output output.zip scratch/generate_all_outputs.py
-git log --all -S"[REDACTED_IMEI]" --oneline
-git log --all -S"[REDACTED_ICCID]" --oneline
-git log --all -S"PAIRODg2" --oneline
+git log --all -S"<IMEI>" --oneline
+git log --all -S"<ICCID>" --oneline
+git log --all -S"<PAIRING_TOKEN>" --oneline
 # expect: no output for all four
 
 # Confirm the new tip hashes actually differ from §3's table (proof the rewrite took effect):
