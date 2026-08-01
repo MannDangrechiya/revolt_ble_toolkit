@@ -62,6 +62,7 @@ generate_report(classified: Sequence[ClassifiedPacket]) -> str
 
 CaptureComparator        # .compare(result1, result2) -> list[HandleDiff]
 compare_captures(path1, path2) -> list[HandleDiff]
+format_diff_report(diffs: list[HandleDiff]) -> str   # plain-text rendering, shared by CLI and GUI
 HandleDiff               # frozen dataclass + .changed_byte_offsets property
 CorrelationCategory      # enum: battery, voltage, temperature, gps, ride_mode, charging, unknown
 ```

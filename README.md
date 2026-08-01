@@ -191,7 +191,9 @@ truth for build and tool configuration (PEP 517/518/621).
 - **Desktop GUI** (`gui`, PySide6): drag-and-drop a capture onto the window
   (or `File > Open`) to get a searchable/filterable packet table, a
   click-to-seek timeline, Hex/ASCII/Statistics panes for the selected
-  packet, and a dark theme.
+  packet, and a dark theme. The `File` menu also has `Export Report...` and
+  `Compare with...` (wired to the exporter/comparator below), a persisted
+  Recent Captures list, and keyboard shortcuts (Ctrl+O/E/Shift+C/F/Q).
 - **Module 6 — Capture comparator** (`analyzers.compare`): diffs the
   notified values of two captures of the same device by GATT attribute
   handle, and heuristically guesses which changed handle maps to battery /

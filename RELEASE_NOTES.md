@@ -8,7 +8,7 @@ A complete, production-ready toolkit for reverse-engineering BLE traffic from An
 
 - **Offline analysis**, from a `btsnoop_hci.log` file to a full picture: HCI framing → ATT PDUs → GATT services/characteristics/descriptors → heuristic protocol-role classification, all as one function call (`pipeline.run_pipeline`) or one CLI command (`revolt-ble-toolkit analyze`).
 - **A CLI** (`revolt-ble-toolkit parse|analyze|export|compare`) that's actually implemented — every subcommand does real work, none are placeholders.
-- **A desktop GUI** (`revolt-ble-gui`) — drag a capture in, get a searchable/filterable packet table, a click-to-seek timeline, hex/ASCII/statistics panes, dark theme.
+- **A desktop GUI** (`revolt-ble-gui`) — drag a capture in, get a searchable/filterable packet table, a click-to-seek timeline, hex/ASCII/statistics panes, dark theme, plus a `File` menu for exporting a report, comparing with a second capture, a persisted recent-captures list, and keyboard shortcuts.
 - **Cross-capture comparison** (`revolt-ble-toolkit compare`) — capture the same device in two states and see exactly which GATT handles changed, with a heuristic (confidence-scored) guess at what each change might represent.
 - **A live BLE client** (`revolt-ble-live`, Bleak-based) — connect to a real device, not just a capture file: scan, connect, discover, subscribe, run the PAIR handshake, auto-reconnect, and expose every raw notification and write.
 - **A Flutter SDK** (`flutter_sdk/`) — the same live-client capability for a mobile app, plus a runnable demo.
@@ -19,8 +19,8 @@ Every piece of decoded information is labeled by how certain it actually is. Wir
 
 ## Quality bar for this release
 
-- 120 tests, all passing.
-- 91% line coverage — the remaining 9% is thin UI/CLI entry-point wiring and a handful of documented, deliberately-untestable-without-hardware paths, not untested logic.
+- 142 tests, all passing.
+- 92% line coverage — the remaining 8% is thin UI/CLI entry-point wiring and a handful of documented, deliberately-untestable-without-hardware paths, not untested logic.
 - Zero Ruff findings, zero Black reformats, zero MyPy errors (`--strict`) across the whole `src/`+`tests/` tree.
 - Zero known import cycles, zero dead code, zero unused modules — verified by direct usage search, not assumed.
 - A real crash bug (malformed GATT discovery data could raise an unhandled `struct.error`) was found and fixed as part of getting to this release, not left for later.

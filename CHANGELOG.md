@@ -14,7 +14,8 @@ First tagged release. Everything below was built incrementally across one contin
 - **Module 3 — GATT analyzer:** `analyzers.gatt.GattAnalyzer`, reconstructing the services/characteristics/descriptors hierarchy from discovery PDUs.
 - **Module 4 — Protocol analyzer:** `analyzers.protocol.ProtocolAnalyzer`, heuristic confidence-scored classification of ATT traffic by role.
 - **Capture report exporter:** `exporters.capture_report.generate_capture_report`, writing `commands.csv`/`notifications.csv`/`statistics.json`/`summary.md`.
-- **Desktop GUI:** PySide6 app (`revolt-ble-gui`) — drag-and-drop, searchable/filterable packet table, click-to-seek timeline, Hex/ASCII/Statistics panes, dark theme.
+- **Desktop GUI:** PySide6 app (`revolt-ble-gui`) — drag-and-drop, searchable/filterable packet table, click-to-seek timeline, Hex/ASCII/Statistics panes, dark theme, `File` menu (Export Report..., Compare with..., a `QSettings`-backed Recent Captures list, Quit), and keyboard shortcuts (Ctrl+O/E/Shift+C/F/Q).
+- `analyzers.compare.format_diff_report`: plain-text rendering of a comparator's `HandleDiff` list, shared by the CLI's `compare` subcommand and the GUI's Compare with... dialog rather than each formatting it separately.
 - **Module 6 — Capture comparator:** `analyzers.compare.compare_captures`, diffing two captures by GATT attribute handle and heuristically correlating changes to battery/voltage/temperature/GPS/ride-mode/charging.
 - **Module 10 — Live BLE client:** `live.RevoltLiveClient` (Bleak-based), `revolt-ble-live` CLI — scan, connect, discover, subscribe, PAIR handshake, write, auto-reconnect, raw notification/write logging and persistence.
 - **Module 11 — Flutter SDK:** separate Dart package (`flutter_sdk/`) mirroring the live client for mobile use, plus a runnable demo app (`flutter_sdk/example/`).

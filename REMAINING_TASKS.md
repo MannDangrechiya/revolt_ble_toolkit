@@ -28,9 +28,10 @@ Everything that could be fixed with code, in this audit, was fixed in this audit
 
 ### 3. Streaming/lazy pipeline for very large captures
 
-- **Why it matters:** `pipeline.run_pipeline()` calls `list(...)` on the HCI parser's generator immediately, and every downstream stage (ATT, GATT, protocol classification) takes a fully-materialized list. This is simple and was the right call for the captures actually tested (~4,700 packets, sub-second) — but a multi-gigabyte capture would need to fit entirely in memory.
+- **Why it matters:** `pipeline.run_pipeline()` calls `list(...)` on the HCI parser's generator immediately, and every downstream stage (ATT, GATT, protocol classification) takes a fully-materialized list. This is simple and was measured (not assumed) to be the right call for the captures actually tested.
+- **Measured, not guessed:** profiled against the real 716 KiB / 4,706-packet capture — full pipeline 27.3 ms, peak memory 2.33 MiB, no disproportionate hotspot in a `cProfile` breakdown (HCI parsing dominates the total simply because it's the only stage touching every byte). Linearly extrapolating to a 1 GiB capture: ~36 seconds, ~3.3 GiB peak memory — the scale at which this would start to genuinely matter. See KNOWN_LIMITATIONS.md for the full numbers.
 - **Current limitation:** No streaming path exists. `GattAnalyzer` and `ProtocolAnalyzer` both need to see a channel's/connection's *entire* history to do cross-packet analysis (heartbeat-interval detection, discovery-response correlation across a whole file), so full streaming isn't a drop-in change — it would need each analyzer's internal accumulation logic reworked to bound memory, not just the parser's output.
-- **Recommended implementation:** Only worth doing once a real capture is large enough to matter. If it is: profile memory on that real file first (don't guess at a threshold), then consider chunked/windowed analysis in `GattAnalyzer`/`ProtocolAnalyzer` rather than a full pipeline rewrite.
+- **Recommended implementation:** Only worth doing once a real capture actually approaches the ~1 GiB scale above. If it is: re-profile that specific file first, then consider chunked/windowed analysis in `GattAnalyzer`/`ProtocolAnalyzer` rather than a full pipeline rewrite.
 - **Estimated effort:** 1–2 days, and carries real regression risk against a currently fully-green, 100%-covered pipeline — don't take this on speculatively.
 - **Dependencies:** A real capture large enough to demonstrate the problem exists before spending the effort.
 
@@ -42,25 +43,9 @@ Everything that could be fixed with code, in this audit, was fixed in this audit
 - **Estimated effort:** ~half a day including tests.
 - **Dependencies:** None.
 
-### 5. GUI: wire `export` and `compare` into the desktop app
-
-- **Why it matters:** The GUI can load and browse one capture, but exporting a report or comparing two captures currently requires dropping to the CLI (`revolt-ble-toolkit export`/`compare`). For a "professional UI" that's meant to be the primary interface, that's an inconsistency.
-- **Current limitation:** `gui/main_window.py` has no export menu action and no second-capture-load flow for comparison.
-- **Recommended implementation:** Add a `File > Export Report...` action calling `exporters.capture_report.generate_capture_report` with a directory picker; add a `File > Compare with...` action calling `analyzers.compare.compare_captures` and rendering `HandleDiff` results in a new panel/dialog.
-- **Estimated effort:** ~1 day (mostly Qt dialog wiring; both underlying functions already exist and are tested).
-- **Dependencies:** None.
-
-### 6. GUI: recent-files list, keyboard shortcuts
-
-- **Why it matters:** Named directly in the original GUI requirements' spirit ("professional UI"); currently every session starts from a blank drag-and-drop prompt.
-- **Current limitation:** No persisted recent-files list, no keyboard shortcuts beyond the implicit ones Qt widgets provide for free.
-- **Recommended implementation:** `QSettings` (built into Qt, no new dependency) for a small persisted recent-files list under `File`; a handful of `QAction.setShortcut()` calls for Open/Export/Search-focus.
-- **Estimated effort:** ~half a day.
-- **Dependencies:** None.
-
 ## Low
 
-### 7. GATT characteristic *value* semantics (e.g., what a CCCD's bits mean)
+### 5. GATT characteristic *value* semantics (e.g., what a CCCD's bits mean)
 
 - **Why it matters:** Would let the toolkit describe *what a write to a given descriptor does*, not just that a write happened.
 - **Current limitation:** Deliberately not implemented — this is the same "don't guess protocol data" boundary the whole project has held since Module 1. A CCCD's two bytes (`0x0001` = notifications, `0x0002` = indications, per the Bluetooth Core Spec) could be decoded generically, but *device-specific* descriptor/characteristic value meaning cannot be inferred without a spec or more targeted captures.

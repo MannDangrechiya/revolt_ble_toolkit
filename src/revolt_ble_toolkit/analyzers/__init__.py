@@ -12,6 +12,7 @@ from revolt_ble_toolkit.analyzers.compare import (
     CorrelationCategory,
     HandleDiff,
     compare_captures,
+    format_diff_report,
 )
 from revolt_ble_toolkit.analyzers.gatt import (
     Characteristic,
@@ -40,5 +41,6 @@ __all__ = [
     "ProtocolAnalyzer",
     "Service",
     "compare_captures",
+    "format_diff_report",
     "generate_report",
 ]

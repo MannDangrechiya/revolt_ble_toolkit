@@ -20,7 +20,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from revolt_ble_toolkit import __version__
-from revolt_ble_toolkit.analyzers.compare import compare_captures
+from revolt_ble_toolkit.analyzers.compare import compare_captures, format_diff_report
 from revolt_ble_toolkit.analyzers.protocol import generate_report
 from revolt_ble_toolkit.config.logging_config import configure_logging, get_logger
 from revolt_ble_toolkit.config.settings import get_settings
@@ -113,22 +113,7 @@ def _cmd_export(args: argparse.Namespace) -> int:
 
 def _cmd_compare(args: argparse.Namespace) -> int:
     diffs = compare_captures(args.capture1, args.capture2)
-    if not diffs:
-        print("No changed handles detected between the two captures.")
-        return 0
-    for diff in diffs:
-        before = (
-            diff.capture1_last_value.hex() if diff.capture1_last_value is not None else "(absent)"
-        )
-        after = (
-            diff.capture2_last_value.hex() if diff.capture2_last_value is not None else "(absent)"
-        )
-        print(
-            f"handle {diff.attribute_handle} (uuid={diff.uuid or 'unknown'}): "
-            f"{diff.category.value} (confidence {diff.confidence:.2f}) — {diff.reason}"
-        )
-        print(f"  before: {before}")
-        print(f"  after:  {after}")
+    print(format_diff_report(diffs), end="")
     return 0
 
 

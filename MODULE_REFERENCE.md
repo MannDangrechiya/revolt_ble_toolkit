@@ -42,6 +42,7 @@ Diffs two captures of the same device by GATT attribute handle and heuristically
 
 - **Entry point:** `compare_captures(path1, path2) -> list[HandleDiff]`; `CaptureComparator().compare(result1, result2)`
 - **Key types:** `HandleDiff` (attribute_handle, uuid, before/after values, `.changed_byte_offsets`, category, confidence, reason), `CorrelationCategory` (battery/voltage/temperature/gps/ride_mode/charging/unknown)
+- **Formatting:** `format_diff_report(diffs) -> str` — plain-text rendering shared by the CLI's `compare` subcommand and the GUI's Compare with... dialog
 - **Tests:** `tests/test_analyzers/test_compare_analyzer.py`
 
 ## `exporters.capture_report`
@@ -62,9 +63,10 @@ Orchestrates the four stages above end to end. Shared by the CLI, GUI, exporter,
 
 ## `gui` (optional `gui` extra: PySide6)
 
-Desktop app: drag-and-drop a capture, get a searchable/filterable packet table, a click-to-seek timeline, Hex/ASCII/Statistics panes, dark theme.
+Desktop app: drag-and-drop a capture, get a searchable/filterable packet table, a click-to-seek timeline, Hex/ASCII/Statistics panes, dark theme, and a `File` menu (Open, Export Report..., Compare with..., a `QSettings`-backed Recent Captures list, Quit) plus keyboard shortcuts (Ctrl+O/E/Shift+C/F/Q).
 
 - **Entry point:** `revolt-ble-gui [path/to/capture]` (console script) or `gui.app.main()`
+- No progress bar/loading indicator: measured full-pipeline load time is ~27ms (see KNOWN_LIMITATIONS.md), so one would be unjustified theater rather than a real UX fix.
 - **Tests:** `tests/test_gui/`
 
 ## `live` (optional `live` extra: Bleak) — Module 10

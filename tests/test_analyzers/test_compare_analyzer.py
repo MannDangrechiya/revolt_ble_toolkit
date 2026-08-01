@@ -5,7 +5,11 @@ from __future__ import annotations
 import struct
 from datetime import UTC, datetime
 
-from revolt_ble_toolkit.analyzers.compare import CaptureComparator, CorrelationCategory
+from revolt_ble_toolkit.analyzers.compare import (
+    CaptureComparator,
+    CorrelationCategory,
+    format_diff_report,
+)
 from revolt_ble_toolkit.analyzers.gatt import Characteristic, CharacteristicProperty, Service
 from revolt_ble_toolkit.parsers.att import AttOpcode, AttPacket
 from revolt_ble_toolkit.parsers.btsnoop.models import PacketDirection
@@ -228,3 +232,19 @@ def test_read_response_and_read_request_are_ignored() -> None:
     capture2 = _result([read_req, read_resp2])
 
     assert CaptureComparator().compare(capture1, capture2) == []
+
+
+def test_format_diff_report_empty() -> None:
+    assert format_diff_report([]) == "No changed handles detected between the two captures.\n"
+
+
+def test_format_diff_report_lists_each_diff() -> None:
+    capture1 = _result([_notify(20, bytes([80]))])
+    capture2 = _result([_notify(20, bytes([50]))])
+
+    diffs = CaptureComparator().compare(capture1, capture2)
+    report = format_diff_report(diffs)
+
+    assert "handle 20" in report
+    assert "before: 50" in report
+    assert "after:  32" in report

@@ -35,7 +35,19 @@ Everything this toolkit knows about the RV400's actual protocol (as opposed to g
 ## Other Limitations
 
 - **No real-hardware validation of the live BLE client this audit.** Tested against a fake Bleak backend built from the real, installed `bleak` 3.0.2's actual source (not assumed from memory) — this validates logic, not real radio behavior. See REMAINING_TASKS.md, High priority item 1.
-- **Large-capture memory use is untested.** The pipeline fully materializes a capture into memory. Fine for every capture actually tested (thousands of packets, sub-second); unverified for anything gigabyte-scale. See REMAINING_TASKS.md, Medium priority item 3.
+- **Large-capture memory use — measured, not guessed, and genuinely fine at every size tested.** The pipeline fully materializes a capture in memory rather than streaming. Measured against the real 716 KiB / 4,706-packet capture (5 repeated runs, best-of-5 wall time; peak memory from a separate `tracemalloc` run, since profiling instrumentation itself measurably distorts timing — an earlier draft of this document conflated the two and reported an inflated number):
+
+  | Stage | Wall time | 
+  |---|---|
+  | HCI parse (`BtSnoopHciParser`) | 25.5 ms |
+  | ATT decode (`AttParser`) | 0.7 ms |
+  | GATT discovery (`GattAnalyzer`) | 0.2 ms |
+  | Protocol classification (`ProtocolAnalyzer`) | 0.2 ms |
+  | **Full pipeline** (`run_pipeline`) | **27.3 ms** |
+  | Full export (`generate_capture_report`, incl. all 4 files) | 33.5 ms |
+  | Peak memory (full pipeline) | 2.33 MiB |
+
+  HCI parsing dominates the total (as expected — it's the only stage touching every byte of the file), but nothing is disproportionate: `cProfile` shows no hotspot beyond ordinary per-packet struct-unpacking/enum/datetime construction cost. Linearly extrapolating (a real measurement turned into an estimate, not a new measurement) to a **1 GiB** capture: roughly **36 seconds** and **~3.3 GiB** peak memory — the point at which the current fully-in-memory design would start to genuinely matter. No capture anywhere near that size has ever been available to actually test against. See REMAINING_TASKS.md, Medium priority item 3.
 - **GUI coverage gaps are visual/interaction code, not logic gaps.** `gui/main_window.py` (81%) and `gui/widgets.py` (86%) have real, working features (drag-drop, search, filter, timeline, hex/ASCII, statistics) — the uncovered lines are Qt paint events, mouse events, and drag-and-drop event handlers that aren't meaningfully unit-testable without a running display. The underlying logic they call (filtering, formatting) is separately tested and at 100%.
 - **No Android runtime permission flow in the Flutter demo.** Manifest permissions are declared (required for the OS to allow granting them at all), but the demo doesn't prompt at runtime — explicitly out of scope for this audit per the instructions not to modify the Flutter application.
 - **The `flutter_sdk/` package was not audited in this pass.** Explicitly excluded per instructions. Its own `README.md`/`CHANGELOG.md` are the source of truth for its state.
