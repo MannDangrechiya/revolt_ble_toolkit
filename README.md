@@ -194,6 +194,9 @@ truth for build and tool configuration (PEP 517/518/621).
   `connect()`/`authenticate()`/`listen()`/`write()`/`disconnect()`, same
   protocol, same raw-packets-only rule. Separate package/ecosystem (its own
   `pubspec.yaml`), not part of the Python distribution.
+  [`flutter_sdk/example/`](flutter_sdk/example/) is a runnable dark-themed
+  demo app: connect/disconnect, a live packet counter, and a scrolling raw
+  notification log (timestamp, characteristic, hex, ASCII per packet).
 
 ## Roadmap (future milestones)
 
