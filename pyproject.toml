@@ -35,10 +35,14 @@ dev = [
 gui = [
     "PySide6>=6.7.0",
 ]
+live = [
+    "bleak>=0.22",
+]
 
 [project.scripts]
 revolt-ble-toolkit = "revolt_ble_toolkit.cli.main:main"
 revolt-ble-gui = "revolt_ble_toolkit.gui.app:main"
+revolt-ble-live = "revolt_ble_toolkit.live.cli:main"
 
 [project.urls]
 Repository = "https://example.com/revolt-ble-toolkit"

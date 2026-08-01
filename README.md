@@ -12,6 +12,8 @@ captured in **Android HCI Snoop Logs**.
 - Python **3.12**
 - [uv](https://docs.astral.sh/uv/) (preferred) or `pip`
 - The desktop GUI needs the optional `gui` extra (PySide6) — see below.
+- The live BLE client needs the optional `live` extra (Bleak) and a real
+  Bluetooth adapter — see below.
 
 ## Project layout
 
@@ -124,6 +126,7 @@ uv run pytest
 uv run revolt-ble-toolkit --help
 uv run revolt-ble-gui                      # desktop GUI
 uv run revolt-ble-gui btsnoop_hci.log      # ...opened directly on a capture
+uv run revolt-ble-live --pair TOKEN123     # live client: scan, connect, pair
 ```
 
 ### With pip
@@ -132,10 +135,11 @@ uv run revolt-ble-gui btsnoop_hci.log      # ...opened directly on a capture
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements-dev.txt
-pip install -e ".[gui]"    # add the GUI's PySide6 dependency; omit for headless/library use
+pip install -e ".[gui,live]"    # GUI (PySide6) + live client (Bleak); omit either for headless/library use
 pytest
 revolt-ble-toolkit --help
 revolt-ble-gui
+revolt-ble-live --help
 ```
 
 ## Development tooling
@@ -178,6 +182,13 @@ truth for build and tool configuration (PEP 517/518/621).
   handle, and heuristically guesses which changed handle maps to battery /
   voltage / temperature / GPS / ride mode / charging (confidence-scored,
   never asserted as fact).
+- **Module 10 — Live BLE client** (`live`, Bleak): connects to a real RV400
+  (scans by advertised name or a known address), discovers services,
+  subscribes to every notify-capable characteristic, implements the PAIR
+  handshake's mechanics (caller supplies the token — never derived or
+  guessed), reconnects automatically on drop, and logs/saves/calls back
+  every notification and write verbatim — no telemetry interpretation here.
+  CLI: `revolt-ble-live`.
 
 ## Roadmap (future milestones)
 
