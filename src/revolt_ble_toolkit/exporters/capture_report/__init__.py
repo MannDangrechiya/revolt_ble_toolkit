@@ -7,7 +7,16 @@ from __future__ import annotations
 
 from revolt_ble_toolkit.exporters.capture_report.report import (
     CaptureReportPaths,
+    PipelineResult,
+    build_statistics,
     generate_capture_report,
+    run_pipeline,
 )
 
-__all__ = ["CaptureReportPaths", "generate_capture_report"]
+__all__ = [
+    "CaptureReportPaths",
+    "PipelineResult",
+    "build_statistics",
+    "generate_capture_report",
+    "run_pipeline",
+]

@@ -15,6 +15,7 @@ import json
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from revolt_ble_toolkit.analyzers.gatt import GattAnalyzer, Service, handle_uuid_map
 from revolt_ble_toolkit.analyzers.protocol import (
@@ -46,16 +47,80 @@ class CaptureReportPaths:
     summary_md: Path
 
 
+@dataclass(frozen=True, slots=True)
+class PipelineResult:
+    """Everything the HCI -> ATT -> GATT -> protocol pipeline produced."""
+
+    hci_packets: list[HciPacket]
+    att_packets: list[AttPacket]
+    services: list[Service]
+    classified: list[ClassifiedPacket]
+
+
+def run_pipeline(btsnoop_path: str | Path) -> PipelineResult:
+    """Run the full pipeline over a BTSnoop capture file."""
+    hci_packets = list(BtSnoopHciParser().parse_file(btsnoop_path))
+    att_packets = list(AttParser().parse(hci_packets))
+    services = GattAnalyzer().analyze(att_packets)
+    classified = ProtocolAnalyzer().classify(att_packets, services)
+    return PipelineResult(hci_packets, att_packets, services, classified)
+
+
+def build_statistics(btsnoop_path: str | Path, result: PipelineResult) -> dict[str, Any]:
+    """Build the same counts dict used for statistics.json, for reuse elsewhere (e.g. a GUI)."""
+    hci_packets, att_packets, services, classified = (
+        result.hci_packets,
+        result.att_packets,
+        result.services,
+        result.classified,
+    )
+    hci_by_type = Counter(p.packet_type.name for p in hci_packets)
+    hci_by_direction = Counter(p.direction.value for p in hci_packets)
+    connection_handles = sorted({p.acl.connection_handle for p in hci_packets if p.acl is not None})
+    att_by_opcode = Counter(p.opcode.name for p in att_packets)
+    category_groups: dict[str, list[float]] = {}
+    for cp in classified:
+        category_groups.setdefault(cp.category.value, []).append(cp.confidence)
+
+    return {
+        "source_file": str(btsnoop_path),
+        "hci": {
+            "total_packets": len(hci_packets),
+            "by_type": dict(hci_by_type),
+            "by_direction": dict(hci_by_direction),
+            "connection_handles": connection_handles,
+        },
+        "att": {
+            "total_packets": len(att_packets),
+            "by_opcode": dict(att_by_opcode),
+        },
+        "gatt": {
+            "services_discovered": len(services),
+            "characteristics_discovered": sum(len(s.characteristics) for s in services),
+            "descriptors_discovered": sum(
+                len(c.descriptors) for s in services for c in s.characteristics
+            ),
+        },
+        "protocol_classification": {
+            category: {"count": len(scores), "avg_confidence": round(sum(scores) / len(scores), 2)}
+            for category, scores in category_groups.items()
+        },
+    }
+
+
 def generate_capture_report(btsnoop_path: str | Path, out_dir: str | Path) -> CaptureReportPaths:
     """Parse ``btsnoop_path`` and write the four report files into ``out_dir``."""
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     btsnoop_path = Path(btsnoop_path)
 
-    hci_packets = list(BtSnoopHciParser().parse_file(btsnoop_path))
-    att_packets = list(AttParser().parse(hci_packets))
-    services = GattAnalyzer().analyze(att_packets)
-    classified = ProtocolAnalyzer().classify(att_packets, services)
+    result = run_pipeline(btsnoop_path)
+    hci_packets, att_packets, services, classified = (
+        result.hci_packets,
+        result.att_packets,
+        result.services,
+        result.classified,
+    )
     handle_uuids = handle_uuid_map(services)
 
     paths = CaptureReportPaths(
@@ -69,8 +134,8 @@ def generate_capture_report(btsnoop_path: str | Path, out_dir: str | Path) -> Ca
     _write_att_csv(
         paths.notifications_csv, att_packets, AttOpcode.HANDLE_VALUE_NOTIFICATION, handle_uuids
     )
-    _write_statistics_json(
-        paths.statistics_json, btsnoop_path, hci_packets, att_packets, services, classified
+    paths.statistics_json.write_text(
+        json.dumps(build_statistics(btsnoop_path, result), indent=2) + "\n", encoding="utf-8"
     )
     _write_summary_md(
         paths.summary_md, btsnoop_path, hci_packets, att_packets, services, classified
@@ -100,49 +165,6 @@ def _write_att_csv(
                     len(att.value),
                 ]
             )
-
-
-def _write_statistics_json(
-    path: Path,
-    btsnoop_path: Path,
-    hci_packets: list[HciPacket],
-    att_packets: list[AttPacket],
-    services: list[Service],
-    classified: list[ClassifiedPacket],
-) -> None:
-    hci_by_type = Counter(p.packet_type.name for p in hci_packets)
-    hci_by_direction = Counter(p.direction.value for p in hci_packets)
-    connection_handles = sorted({p.acl.connection_handle for p in hci_packets if p.acl is not None})
-    att_by_opcode = Counter(p.opcode.name for p in att_packets)
-    category_groups: dict[str, list[float]] = {}
-    for cp in classified:
-        category_groups.setdefault(cp.category.value, []).append(cp.confidence)
-
-    stats = {
-        "source_file": str(btsnoop_path),
-        "hci": {
-            "total_packets": len(hci_packets),
-            "by_type": dict(hci_by_type),
-            "by_direction": dict(hci_by_direction),
-            "connection_handles": connection_handles,
-        },
-        "att": {
-            "total_packets": len(att_packets),
-            "by_opcode": dict(att_by_opcode),
-        },
-        "gatt": {
-            "services_discovered": len(services),
-            "characteristics_discovered": sum(len(s.characteristics) for s in services),
-            "descriptors_discovered": sum(
-                len(c.descriptors) for s in services for c in s.characteristics
-            ),
-        },
-        "protocol_classification": {
-            category: {"count": len(scores), "avg_confidence": round(sum(scores) / len(scores), 2)}
-            for category, scores in category_groups.items()
-        },
-    }
-    path.write_text(json.dumps(stats, indent=2) + "\n", encoding="utf-8")
 
 
 def _write_summary_md(

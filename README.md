@@ -3,14 +3,15 @@
 A professional toolkit for reverse engineering Bluetooth Low Energy (BLE) traffic
 captured in **Android HCI Snoop Logs**.
 
-> **Status:** Foundation + Module 1 (BTSnoop HCI parser). Analysis above the
-> HCI layer (L2CAP/ATT/GATT) and export business logic are intentionally
-> **not** implemented yet and will land in later milestones.
+> **Status:** Foundation + Modules 1-4 (HCI/ATT parsing, GATT discovery,
+> heuristic protocol classification) + a PySide6 desktop GUI. GATT semantics
+> (interpreting characteristic/descriptor values) are the next milestone.
 
 ## Requirements
 
 - Python **3.12**
 - [uv](https://docs.astral.sh/uv/) (preferred) or `pip`
+- The desktop GUI needs the optional `gui` extra (PySide6) — see below.
 
 ## Project layout
 
@@ -38,21 +39,30 @@ revolt_ble_toolkit/
 │       │   └── interfaces.py
 │       ├── parsers/            # Capture-log parsers
 │       │   ├── base.py         # Generic extension point (future pipeline use)
-│       │   └── btsnoop/        # Module 1: BTSnoop HCI parser
-│       │       ├── constants.py
-│       │       ├── models.py
-│       │       └── parser.py
-│       ├── analyzers/          # Extension point for record analyzers
-│       │   └── base.py
-│       ├── exporters/          # Extension point for result exporters
-│       │   └── base.py
+│       │   ├── btsnoop/        # Module 1: BTSnoop HCI parser
+│       │   └── att/            # Module 2: ATT PDU parser
+│       ├── analyzers/
+│       │   ├── base.py         # Generic extension point (future pipeline use)
+│       │   ├── gatt/           # Module 3: GATT hierarchy analyzer
+│       │   └── protocol/       # Module 4: heuristic protocol classifier
+│       ├── exporters/
+│       │   ├── base.py         # Generic extension point (future pipeline use)
+│       │   └── capture_report/ # commands.csv/notifications.csv/statistics.json/summary.md
+│       ├── gui/                 # PySide6 desktop GUI
+│       │   ├── app.py           # Entry point + dark theme (`revolt-ble-gui`)
+│       │   ├── main_window.py   # Drag-and-drop, filters/search, hex/ASCII/stats panes
+│       │   └── widgets.py       # Table model, filter proxy, timeline widget
 │       └── utils/              # Small, dependency-free helpers
 ├── docs/
-│   └── hci_parser.md         # Module 1 documentation
+│   ├── hci_parser.md         # Module 1 documentation
+│   └── att_parser.md         # Module 2 documentation
 └── tests/
     ├── test_config/
     ├── test_core/
-    └── test_parsers/
+    ├── test_parsers/
+    ├── test_analyzers/
+    ├── test_exporters/
+    └── test_gui/
 ```
 
 ## Architecture
@@ -112,6 +122,8 @@ logger = get_logger(__name__)
 uv sync --all-extras
 uv run pytest
 uv run revolt-ble-toolkit --help
+uv run revolt-ble-gui                      # desktop GUI
+uv run revolt-ble-gui btsnoop_hci.log      # ...opened directly on a capture
 ```
 
 ### With pip
@@ -120,9 +132,10 @@ uv run revolt-ble-toolkit --help
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements-dev.txt
-pip install -e .
+pip install -e ".[gui]"    # add the GUI's PySide6 dependency; omit for headless/library use
 pytest
 revolt-ble-toolkit --help
+revolt-ble-gui
 ```
 
 ## Development tooling
@@ -144,12 +157,25 @@ truth for build and tool configuration (PEP 517/518/621).
   parses `btsnoop_hci.log` into `HciPacket` objects (timestamp, direction,
   size, sequence number, packet type, and ACL connection handles/flags).
 - **Module 2 — ATT parser** ([docs/att_parser.md](docs/att_parser.md)):
-  decodes ATT PDUs (Exchange MTU, Read Request/Response, Write
-  Request/Command, Notification, Indication) out of `HciPacket` objects.
+  decodes ATT PDUs (Exchange MTU, Read/Write Request/Response, Write
+  Command, Notification, Indication, and GATT discovery responses) out of
+  `HciPacket` objects.
+- **Module 3 — GATT analyzer** (`analyzers.gatt`): reconstructs the
+  services/characteristics/descriptors hierarchy (UUIDs, handles,
+  properties) from GATT discovery PDUs.
+- **Module 4 — Protocol analyzer** (`analyzers.protocol`): heuristically
+  classifies ATT traffic (authentication/telemetry/configuration/heartbeat/
+  firmware/unknown) with a confidence score per classification.
+- **Capture report exporter** (`exporters.capture_report`): runs the full
+  pipeline and writes `commands.csv`, `notifications.csv`,
+  `statistics.json`, and `summary.md`.
+- **Desktop GUI** (`gui`, PySide6): drag-and-drop a capture onto the window
+  (or `File > Open`) to get a searchable/filterable packet table, a
+  click-to-seek timeline, Hex/ASCII/Statistics panes for the selected
+  packet, and a dark theme.
 
 ## Roadmap (future milestones)
 
-- Reports/summaries over decoded ATT traffic
-- GATT semantics (service/characteristic/descriptor interpretation)
-- Export formats (JSON, CSV, PCAP)
-- CLI subcommand implementations
+- GATT semantics (interpreting characteristic/descriptor values, e.g. CCCD bits)
+- Export formats beyond CSV/JSON/Markdown (e.g. PCAP)
+- CLI subcommand implementations (`parse`/`analyze`/`export` are currently stubs)
