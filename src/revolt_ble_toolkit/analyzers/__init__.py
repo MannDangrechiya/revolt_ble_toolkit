@@ -1,14 +1,12 @@
 """Packet/record analyzers.
 
-``BaseAnalyzer`` is the generic extension point for future pipeline
-integration; ``GattAnalyzer`` reconstructs the GATT hierarchy from decoded
-ATT PDUs; ``ProtocolAnalyzer`` heuristically classifies ATT traffic by role;
+``GattAnalyzer`` reconstructs the GATT hierarchy from decoded ATT PDUs;
+``ProtocolAnalyzer`` heuristically classifies ATT traffic by role;
 ``CaptureComparator`` diffs two captures and correlates what changed.
 """
 
 from __future__ import annotations
 
-from revolt_ble_toolkit.analyzers.base import BaseAnalyzer
 from revolt_ble_toolkit.analyzers.compare import (
     CaptureComparator,
     CorrelationCategory,
@@ -30,7 +28,6 @@ from revolt_ble_toolkit.analyzers.protocol import (
 )
 
 __all__ = [
-    "BaseAnalyzer",
     "CaptureComparator",
     "Characteristic",
     "CharacteristicProperty",

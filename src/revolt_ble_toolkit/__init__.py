@@ -1,15 +1,14 @@
 """Revolt BLE Toolkit.
 
 A professional toolkit for reverse engineering Bluetooth Low Energy (BLE)
-traffic captured in Android HCI Snoop Logs.
-
-This is the project foundation: package structure, configuration system,
-logging, and abstract interfaces. Parsing/analysis/export business logic
-is intentionally not implemented yet and lands in later milestones.
+traffic captured in Android HCI Snoop Logs: BTSnoop/ATT parsing, GATT
+discovery, heuristic protocol classification, cross-capture comparison, a
+desktop GUI, and a live BLE client. See ARCHITECTURE.md and
+MODULE_REFERENCE.md for the full module map.
 """
 
 from __future__ import annotations
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 __all__ = ["__version__"]

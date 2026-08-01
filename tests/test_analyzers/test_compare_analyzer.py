@@ -114,6 +114,40 @@ def test_voltage_heuristic() -> None:
     assert diff.category is CorrelationCategory.VOLTAGE
 
 
+def test_voltage_centivolt_heuristic() -> None:
+    capture1 = _result([_notify(65, struct.pack("<H", 370))])  # 3.70V in centivolts
+    capture2 = _result([_notify(65, struct.pack("<H", 360))])
+
+    (diff,) = CaptureComparator().compare(capture1, capture2)
+
+    assert diff.category is CorrelationCategory.VOLTAGE
+    assert diff.confidence == 0.3
+
+
+def test_known_temperature_uuid_high_confidence() -> None:
+    service = Service(
+        connection_handle=1,
+        start_handle=1,
+        end_handle=20,
+        uuid="1809",
+        characteristics=(
+            Characteristic(
+                declaration_handle=9,
+                value_handle=10,
+                uuid="2a1c",
+                properties=CharacteristicProperty.NOTIFY,
+            ),
+        ),
+    )
+    capture1 = _result([_notify(10, struct.pack("<h", 220))], services=[service])
+    capture2 = _result([_notify(10, struct.pack("<h", 250))], services=[service])
+
+    (diff,) = CaptureComparator().compare(capture1, capture2)
+
+    assert diff.category is CorrelationCategory.TEMPERATURE
+    assert diff.confidence == 0.95
+
+
 def test_gps_heuristic() -> None:
     capture1 = _result([_notify(70, struct.pack("<f", 37.7749))])
     capture2 = _result([_notify(70, struct.pack("<f", 37.775))])
@@ -121,6 +155,17 @@ def test_gps_heuristic() -> None:
     (diff,) = CaptureComparator().compare(capture1, capture2)
 
     assert diff.category is CorrelationCategory.GPS
+
+
+def test_correlate_with_no_values_is_unknown() -> None:
+    # _correlate's empty-input guard: unreachable via the public compare()
+    # API (a handle only ever appears with >=1 real value), but a cheap,
+    # worthwhile safety net for a private helper other code could call.
+    category, confidence, reason = CaptureComparator._correlate(None, [])
+
+    assert category is CorrelationCategory.UNKNOWN
+    assert confidence == 0.0
+    assert reason == "no observed values"
 
 
 def test_no_heuristic_match_is_unknown() -> None:

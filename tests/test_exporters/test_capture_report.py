@@ -7,6 +7,9 @@ import struct
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
+
+from revolt_ble_toolkit.core.exceptions import ExportError
 from revolt_ble_toolkit.exporters.capture_report import generate_capture_report
 from tests.test_parsers.fixtures import acl_packet_data, build_file_header, build_record
 
@@ -77,3 +80,36 @@ def test_generate_capture_report_handles_no_att_traffic(tmp_path: Path) -> None:
     assert stats["hci"]["total_packets"] == 0
     assert stats["protocol_classification"] == {}
     assert "No GATT discovery PDUs" in paths.summary_md.read_text()
+
+
+def test_generate_capture_report_summary_lists_discovered_services(tmp_path: Path) -> None:
+    btsnoop_path = tmp_path / "btsnoop_hci.log"
+    now = datetime(2024, 1, 1, tzinfo=UTC)
+    # Read By Group Type Response (0x11): opcode + entry_length + (start, end, uuid16) entries
+    # — no handle-prefix, unlike the write/notify PDUs _att_l2cap() builds.
+    att_pdu = bytes([0x11, 6]) + struct.pack("<HHH", 1, 5, 0x1800)  # Generic Access
+    l2cap = struct.pack("<HH", len(att_pdu), _ATT_CID) + att_pdu
+    data = build_file_header()
+    data += build_record(
+        data=acl_packet_data(connection_handle=1, payload=l2cap),
+        received=True,
+        timestamp=now,
+    )
+    btsnoop_path.write_bytes(data)
+
+    paths = generate_capture_report(btsnoop_path, tmp_path / "out")
+
+    summary = paths.summary_md.read_text()
+    assert "| Service UUID | Handles | Characteristics |" in summary
+    assert "`1800`" in summary
+    assert "1-5" in summary
+
+
+def test_generate_capture_report_wraps_oserror_as_export_error(tmp_path: Path) -> None:
+    btsnoop_path = tmp_path / "btsnoop_hci.log"
+    btsnoop_path.write_bytes(build_file_header())
+    blocked_out_dir = tmp_path / "blocked"
+    blocked_out_dir.write_text("occupies the path so mkdir() fails", encoding="utf-8")
+
+    with pytest.raises(ExportError, match="Failed to write report"):
+        generate_capture_report(btsnoop_path, blocked_out_dir)
