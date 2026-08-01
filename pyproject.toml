@@ -63,6 +63,7 @@ dev-dependencies = [
 line-length = 100
 target-version = "py312"
 src = ["src", "tests"]
+extend-exclude = ["scratch"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "RUF"]
@@ -83,6 +84,7 @@ quote-style = "double"
 [tool.black]
 line-length = 100
 target-version = ["py312"]
+extend-exclude = "^/scratch/"
 
 # --- Mypy (static typing) --------------------------------------------------
 

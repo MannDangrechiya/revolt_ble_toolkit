@@ -12,19 +12,22 @@ from __future__ import annotations
 
 import csv
 import json
-from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
-from revolt_ble_toolkit.analyzers.gatt import GattAnalyzer, Service, handle_uuid_map
-from revolt_ble_toolkit.analyzers.protocol import (
-    ClassifiedPacket,
-    ProtocolAnalyzer,
-    generate_report,
-)
-from revolt_ble_toolkit.parsers.att import AttOpcode, AttPacket, AttParser
-from revolt_ble_toolkit.parsers.btsnoop import BtSnoopHciParser, HciPacket
+from revolt_ble_toolkit.analyzers.gatt import Service, handle_uuid_map
+from revolt_ble_toolkit.analyzers.protocol import ClassifiedPacket, generate_report
+from revolt_ble_toolkit.parsers.att import AttOpcode, AttPacket
+from revolt_ble_toolkit.parsers.btsnoop import HciPacket
+from revolt_ble_toolkit.pipeline import PipelineResult, build_statistics, run_pipeline
+
+__all__ = [
+    "CaptureReportPaths",
+    "PipelineResult",
+    "build_statistics",
+    "generate_capture_report",
+    "run_pipeline",
+]
 
 _CSV_FIELDS = [
     "hci_number",
@@ -45,67 +48,6 @@ class CaptureReportPaths:
     notifications_csv: Path
     statistics_json: Path
     summary_md: Path
-
-
-@dataclass(frozen=True, slots=True)
-class PipelineResult:
-    """Everything the HCI -> ATT -> GATT -> protocol pipeline produced."""
-
-    hci_packets: list[HciPacket]
-    att_packets: list[AttPacket]
-    services: list[Service]
-    classified: list[ClassifiedPacket]
-
-
-def run_pipeline(btsnoop_path: str | Path) -> PipelineResult:
-    """Run the full pipeline over a BTSnoop capture file."""
-    hci_packets = list(BtSnoopHciParser().parse_file(btsnoop_path))
-    att_packets = list(AttParser().parse(hci_packets))
-    services = GattAnalyzer().analyze(att_packets)
-    classified = ProtocolAnalyzer().classify(att_packets, services)
-    return PipelineResult(hci_packets, att_packets, services, classified)
-
-
-def build_statistics(btsnoop_path: str | Path, result: PipelineResult) -> dict[str, Any]:
-    """Build the same counts dict used for statistics.json, for reuse elsewhere (e.g. a GUI)."""
-    hci_packets, att_packets, services, classified = (
-        result.hci_packets,
-        result.att_packets,
-        result.services,
-        result.classified,
-    )
-    hci_by_type = Counter(p.packet_type.name for p in hci_packets)
-    hci_by_direction = Counter(p.direction.value for p in hci_packets)
-    connection_handles = sorted({p.acl.connection_handle for p in hci_packets if p.acl is not None})
-    att_by_opcode = Counter(p.opcode.name for p in att_packets)
-    category_groups: dict[str, list[float]] = {}
-    for cp in classified:
-        category_groups.setdefault(cp.category.value, []).append(cp.confidence)
-
-    return {
-        "source_file": str(btsnoop_path),
-        "hci": {
-            "total_packets": len(hci_packets),
-            "by_type": dict(hci_by_type),
-            "by_direction": dict(hci_by_direction),
-            "connection_handles": connection_handles,
-        },
-        "att": {
-            "total_packets": len(att_packets),
-            "by_opcode": dict(att_by_opcode),
-        },
-        "gatt": {
-            "services_discovered": len(services),
-            "characteristics_discovered": sum(len(s.characteristics) for s in services),
-            "descriptors_discovered": sum(
-                len(c.descriptors) for s in services for c in s.characteristics
-            ),
-        },
-        "protocol_classification": {
-            category: {"count": len(scores), "avg_confidence": round(sum(scores) / len(scores), 2)}
-            for category, scores in category_groups.items()
-        },
-    }
 
 
 def generate_capture_report(btsnoop_path: str | Path, out_dir: str | Path) -> CaptureReportPaths:

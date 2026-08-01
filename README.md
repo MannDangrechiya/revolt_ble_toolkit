@@ -173,6 +173,11 @@ truth for build and tool configuration (PEP 517/518/621).
   (or `File > Open`) to get a searchable/filterable packet table, a
   click-to-seek timeline, Hex/ASCII/Statistics panes for the selected
   packet, and a dark theme.
+- **Module 6 — Capture comparator** (`analyzers.compare`): diffs the
+  notified values of two captures of the same device by GATT attribute
+  handle, and heuristically guesses which changed handle maps to battery /
+  voltage / temperature / GPS / ride mode / charging (confidence-scored,
+  never asserted as fact).
 
 ## Roadmap (future milestones)
 
