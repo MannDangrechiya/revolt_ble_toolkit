@@ -3,10 +3,9 @@
 A professional toolkit for reverse engineering Bluetooth Low Energy (BLE) traffic
 captured in **Android HCI Snoop Logs**.
 
-> **Status:** Project foundation only. This milestone establishes the architecture
-> (package structure, configuration, logging, and abstract interfaces). Parsing,
-> analysis, and export business logic are intentionally **not** implemented yet
-> and will land in later milestones.
+> **Status:** Foundation + Module 1 (BTSnoop HCI parser). Analysis above the
+> HCI layer (L2CAP/ATT/GATT) and export business logic are intentionally
+> **not** implemented yet and will land in later milestones.
 
 ## Requirements
 
@@ -37,16 +36,23 @@ revolt_ble_toolkit/
 │       │   ├── enums.py
 │       │   ├── exceptions.py
 │       │   └── interfaces.py
-│       ├── parsers/            # Extension point for capture-log parsers
-│       │   └── base.py
+│       ├── parsers/            # Capture-log parsers
+│       │   ├── base.py         # Generic extension point (future pipeline use)
+│       │   └── btsnoop/        # Module 1: BTSnoop HCI parser
+│       │       ├── constants.py
+│       │       ├── models.py
+│       │       └── parser.py
 │       ├── analyzers/          # Extension point for record analyzers
 │       │   └── base.py
 │       ├── exporters/          # Extension point for result exporters
 │       │   └── base.py
 │       └── utils/              # Small, dependency-free helpers
+├── docs/
+│   └── hci_parser.md         # Module 1 documentation
 └── tests/
     ├── test_config/
-    └── test_core/
+    ├── test_core/
+    └── test_parsers/
 ```
 
 ## Architecture
@@ -60,9 +66,12 @@ domain layer stable while implementations can be added freely
 (Dependency Inversion / Open-Closed principles).
 
 Each extension-point package ships a `base.py` with an abstract base class
-(`BaseLogParser`, `BaseAnalyzer`, `BaseExporter`). Future milestones will add
-concrete subclasses (e.g. an `AndroidHciSnoopParser`) without touching this
-foundation.
+(`BaseLogParser`, `BaseAnalyzer`, `BaseExporter`) for future pipeline
+integration. The first concrete parser, `BtSnoopHciParser`, is built
+standalone against its own rich, typed models (`HciPacket`, `AclHeader`)
+rather than forced through the generic `ParsedRecord` envelope, since
+nothing consumes that generic path yet — see
+[`docs/hci_parser.md`](docs/hci_parser.md).
 
 ## Configuration system
 
@@ -129,9 +138,15 @@ All tool configuration lives in [`pyproject.toml`](pyproject.toml) — there is
 no separate `setup.py`/`setup.cfg`; `pyproject.toml` is the single source of
 truth for build and tool configuration (PEP 517/518/621).
 
+## Modules
+
+- **Module 1 — BTSnoop HCI parser** ([docs/hci_parser.md](docs/hci_parser.md)):
+  parses `btsnoop_hci.log` into `HciPacket` objects (timestamp, direction,
+  size, sequence number, packet type, and ACL connection handles/flags).
+
 ## Roadmap (future milestones)
 
-- Android HCI Snoop Log format detection and parsing
-- BLE packet/PDU analysis (advertising, GATT, pairing, etc.)
+- L2CAP / ATT / GATT decoding of ACL payloads
+- BLE packet/PDU analysis (advertising, pairing, etc.)
 - Export formats (JSON, CSV, PCAP)
 - CLI subcommand implementations

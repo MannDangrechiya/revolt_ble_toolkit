@@ -1,11 +1,28 @@
 """Capture-log parsers.
 
-Concrete parsers (e.g. for Android HCI Snoop Logs) are added in a future
-milestone. This package currently only exposes the extension point.
+``BaseLogParser`` is the generic extension point for future pipeline
+integration; ``BtSnoopHciParser`` is the concrete, standalone parser for
+Android BTSnoop HCI capture logs (``btsnoop_hci.log``).
 """
 
 from __future__ import annotations
 
 from revolt_ble_toolkit.parsers.base import BaseLogParser
+from revolt_ble_toolkit.parsers.btsnoop import (
+    AclHeader,
+    BtSnoopFileHeader,
+    BtSnoopHciParser,
+    HciPacket,
+    HciPacketType,
+    PacketDirection,
+)
 
-__all__ = ["BaseLogParser"]
+__all__ = [
+    "AclHeader",
+    "BaseLogParser",
+    "BtSnoopFileHeader",
+    "BtSnoopHciParser",
+    "HciPacket",
+    "HciPacketType",
+    "PacketDirection",
+]
