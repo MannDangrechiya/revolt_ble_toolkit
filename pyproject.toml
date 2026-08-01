@@ -80,7 +80,7 @@ target-version = ["py312"]
 [tool.mypy]
 python_version = "3.12"
 mypy_path = "src"
-packages = ["revolt_ble_toolkit"]
+files = ["src", "tests"]
 namespace_packages = true
 explicit_package_bases = true
 strict = true

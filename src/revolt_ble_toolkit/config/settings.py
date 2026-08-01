@@ -24,6 +24,8 @@ from typing import Any
 _ENV_PREFIX = "REVOLT_"
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 _DEFAULT_CONFIG_FILE = _PROJECT_ROOT / "config" / "default.toml"
+_DEFAULT_ENVIRONMENT = "development"
+_DEFAULT_DEBUG = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,8 +55,8 @@ class LoggingSettings:
 class AppSettings:
     """Root, immutable application configuration."""
 
-    environment: str = "development"
-    debug: bool = False
+    environment: str = _DEFAULT_ENVIRONMENT
+    debug: bool = _DEFAULT_DEBUG
     paths: PathSettings = field(default_factory=PathSettings)
     logging: LoggingSettings = field(default_factory=LoggingSettings)
 
@@ -66,7 +68,7 @@ def _read_toml(path: Path) -> dict[str, Any]:
         return tomllib.load(handle)
 
 
-def _coerce(raw_value: str, reference: Any) -> Any:  # noqa: ANN401
+def _coerce(raw_value: str, reference: Any) -> Any:
     """Coerce an environment variable string to the type of ``reference``."""
     if isinstance(reference, bool):
         return raw_value.strip().lower() in {"1", "true", "yes", "on"}
@@ -85,11 +87,9 @@ def _settings_from_mapping(data: dict[str, Any]) -> AppSettings:
     logging_field_names = {f.name for f in fields(LoggingSettings)}
 
     return AppSettings(
-        environment=data.get("environment", AppSettings.environment),
-        debug=data.get("debug", AppSettings.debug),
-        paths=PathSettings(
-            **{k: Path(v) for k, v in paths_data.items() if k in path_field_names}
-        ),
+        environment=data.get("environment", _DEFAULT_ENVIRONMENT),
+        debug=data.get("debug", _DEFAULT_DEBUG),
+        paths=PathSettings(**{k: Path(v) for k, v in paths_data.items() if k in path_field_names}),
         logging=LoggingSettings(
             **{k: v for k, v in logging_data.items() if k in logging_field_names}
         ),
@@ -108,7 +108,8 @@ def _apply_env_overrides(settings: AppSettings) -> AppSettings:
     for f in fields(LoggingSettings):
         env_key = f"{_ENV_PREFIX}LOGGING_{f.name.upper()}"
         if env_key in os.environ:
-            logging_updates[f.name] = _coerce(os.environ[env_key], getattr(settings.logging, f.name))
+            current = getattr(settings.logging, f.name)
+            logging_updates[f.name] = _coerce(os.environ[env_key], current)
     if logging_updates:
         updates["logging"] = replace(settings.logging, **logging_updates)
 
