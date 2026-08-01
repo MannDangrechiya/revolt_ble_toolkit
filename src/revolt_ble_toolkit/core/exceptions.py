@@ -25,3 +25,7 @@ class AnalysisError(ToolkitError):
 
 class ExportError(ToolkitError):
     """Raised when exporting analysis results fails."""
+
+
+class LiveClientError(ToolkitError):
+    """Raised for live BLE connection, discovery, or pairing failures."""
