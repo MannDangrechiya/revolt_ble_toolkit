@@ -6,6 +6,8 @@
 /// interpreting them (battery, temperature, GPS, ...) is left to the app.
 library;
 
+export 'package:flutter_blue_plus/flutter_blue_plus.dart' show License;
+
 export 'src/constants.dart';
 export 'src/control_characteristic.dart';
 export 'src/raw_packet.dart';
