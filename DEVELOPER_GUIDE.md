@@ -7,7 +7,11 @@ uv sync --all-extras          # preferred
 # or
 python -m venv .venv && .venv\Scripts\activate
 pip install -e ".[dev,gui,live]"
+
+git config core.hooksPath .githooks   # activate the sensitive-data pre-commit hook (see below) — per-clone, not shared automatically
 ```
+
+Install [gitleaks](https://github.com/gitleaks/gitleaks) too if you want the secret scan to actually run locally (the hook above skips it with a warning if it's missing) — see [SECRETS_POLICY.md](SECRETS_POLICY.md).
 
 ## The verification gate
 
@@ -20,7 +24,9 @@ mypy
 pytest
 ```
 
-`ruff`/`black`/`mypy` scope to `src/` and `tests/` only (`scratch/` — a pre-existing, separately-committed file unrelated to the package — is explicitly excluded from both tool configs in `pyproject.toml`). `pytest` runs with coverage on by default (`--cov=revolt_ble_toolkit --cov-report=term-missing` in `pyproject.toml`); GUI tests need `QT_QPA_PLATFORM=offscreen` set if you're running headless (no real display).
+`ruff`/`black`/`mypy` scope to `src/` and `tests/` only. `pytest` runs with coverage on by default (`--cov=revolt_ble_toolkit --cov-report=term-missing` in `pyproject.toml`); GUI tests need `QT_QPA_PLATFORM=offscreen` set if you're running headless (no real display).
+
+Don't commit ad-hoc/one-off scripts or their generated output at the repo root — a prior `scratch/`+`output/` pair that did this leaked a real device's IMEI/SIM serial/pairing token into git history before being removed in the v1.0 audit. Use an untracked local directory (or this repo's `reports/`, which is `.gitignore`d) for anything you don't want reviewed and shipped.
 
 If `black` or `ruff --fix` changes files, re-run the full gate afterward — don't assume a fix didn't introduce a new issue.
 

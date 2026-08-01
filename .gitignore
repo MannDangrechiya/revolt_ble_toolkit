@@ -23,8 +23,21 @@ htmlcov/
 # Logs (keep the directory, ignore generated files)
 logs/*.log
 
-# Generated capture reports
+# Generated capture reports / ad-hoc local output
 reports/
+output/
+*.zip
+
+# Ad-hoc/local scripts not part of the package
+scratch/
+
+# Real capture files and device bugreports — these carry real device/personal
+# data (IMEI, SIM ICCID, GPS, pairing tokens) and must never be committed.
+# Use tests/test_parsers/fixtures.py to build synthetic captures instead.
+*btsnoop_hci.log
+*btsnoop*.log
+bugreport*/
+bugreport*.zip
 
 # Editors
 .vscode/

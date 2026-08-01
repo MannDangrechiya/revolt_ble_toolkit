@@ -45,7 +45,7 @@ class _FakeServices:
         self._services = services
         self._by_uuid = {c.uuid: c for s in services for c in s.characteristics}
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[_FakeService]:
         return iter(self._services)
 
     def __len__(self) -> int:

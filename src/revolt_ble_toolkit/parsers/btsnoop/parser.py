@@ -101,15 +101,29 @@ class BtSnoopHciParser:
                 )
 
             number += 1
-            yield self._build_packet(
-                number=number,
-                original_length=original_length,
-                included_length=included_length,
-                flags=flags,
-                cumulative_drops=cumulative_drops,
-                ts_usec=ts_usec,
-                data=data,
-            )
+            try:
+                packet = self._build_packet(
+                    number=number,
+                    original_length=original_length,
+                    included_length=included_length,
+                    flags=flags,
+                    cumulative_drops=cumulative_drops,
+                    ts_usec=ts_usec,
+                    data=data,
+                )
+            except OverflowError:
+                # A timestamp this far from the real BTSnoop epoch offset can't be
+                # represented as a datetime at all; skip just this record rather than
+                # aborting a capture that's otherwise fine (same "log and skip"
+                # convention as the GATT/ATT malformed-data handling).
+                logger.warning(
+                    "%s: record #%d has an out-of-range timestamp (ts_usec=%d); skipping it.",
+                    source,
+                    number,
+                    ts_usec,
+                )
+                continue
+            yield packet
 
     def _build_packet(
         self,

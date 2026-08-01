@@ -27,6 +27,7 @@ First tagged release. Everything below was built incrementally across one contin
 - `ConfigurationError` is now actually raised (wrapping `tomllib.TOMLDecodeError`) when a config file has invalid TOML, instead of a raw, unhelpful exception.
 - `ExportError` is now actually raised (wrapping `OSError`) when a report file or its output directory can't be written.
 - The CLI's `parse`/`analyze`/`export` subcommands, previously 100% placeholder ("not implemented yet" log lines with 0% test coverage), now do real work; a `compare` subcommand was added.
+- `BtSnoopHciParser` no longer crashes with an unhandled `OverflowError` on a record whose timestamp field is far enough from the real BTSnoop epoch offset to be outside Python's representable `datetime` range (e.g. a zero-filled or corrupted timestamp) — found during independent verification for this release audit; the record is now logged and skipped, consistent with the parser's existing malformed-data handling.
 
 ### Changed
 
@@ -38,8 +39,9 @@ First tagged release. Everything below was built incrementally across one contin
 - `utils.paths` (`ensure_directory`, `project_root`) — never imported anywhere outside its own definition.
 - `core.exceptions.AnalysisError` — defined, never raised or caught anywhere.
 - The unreachable `Path` branch in `config.settings._coerce` — no env-overridable setting is `Path`-typed.
+- **`scratch/generate_all_outputs.py` and its committed `output/`/`output.zip` artifacts.** This was an ad-hoc, ungoverned script (not using the package's own exceptions/logging/exporter conventions, and duplicating logic already in `exporters.capture_report`) that had been run against a real personal device's Android bugreport; its checked-in output contained a real IMEI, a real SIM ICCID/serial, and what appears to be a real device pairing token, plus a local Windows username in a file path. Found during the pre-release audit and removed. **This does not by itself scrub git history** — the data was already reachable from `origin/main` and 4 other remote branches before removal; a history rewrite is a separate, deliberate decision the repo owner needs to make (and, if the GitHub repo was ever public, the token/IMEI should be treated as already exposed regardless of a future rewrite). See HISTORY_SANITIZATION.md.
 
 ### Testing
 
-- Test count: 120 (up from 100 before the audit's coverage pass). Line coverage: 91% overall (up from 86%).
-- New coverage for: CLI subcommands (0% → 99%), malformed-TOML/env-var-override paths in configuration, the GATT analyzer's malformed-input guards, several previously-untested heuristic branches in the protocol analyzer and comparator.
+- Test count: 150 (up from 100 before the audit's coverage pass, across several rounds — CLI/config/exception coverage, then GUI export/compare/recent-captures, then a malformed-timestamp regression, then GUI interaction/paint-event coverage). Line coverage: 93% overall (up from 86%).
+- New coverage for: CLI subcommands (0% → 99%), malformed-TOML/env-var-override paths in configuration, the GATT analyzer's malformed-input guards, several previously-untested heuristic branches in the protocol analyzer and comparator, the GUI's File-menu export/compare/recent-captures actions, and a BTSnoop out-of-range-timestamp crash found and fixed during the final release audit.

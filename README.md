@@ -1,5 +1,9 @@
 # Revolt BLE Toolkit
 
+[![CI](https://github.com/MannDangrechiya/revolt_ble_toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/MannDangrechiya/revolt_ble_toolkit/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](pyproject.toml)
+
 A professional toolkit for reverse engineering Bluetooth Low Energy (BLE) traffic
 captured in **Android HCI Snoop Logs**.
 
@@ -21,8 +25,15 @@ captured in **Android HCI Snoop Logs**.
 
 ## Project layout
 
-```
+```text
 revolt_ble_toolkit/
+├── .github/workflows/         # CI (lint/type/test) and tag-triggered release builds
+├── LICENSE                    # MIT
+├── CONTRIBUTING.md
+├── CODE_OF_CONDUCT.md
+├── SECURITY.md
+├── SECRETS_POLICY.md          # Gitleaks: CI + local pre-commit secret scanning
+├── .gitleaks.toml             # allowlist for the known, already-tracked incident docs
 ├── pyproject.toml            # Project metadata, dependencies, tool config (Ruff/Black/MyPy/pytest)
 ├── requirements.txt          # Runtime deps (pip fallback)
 ├── requirements-dev.txt      # Dev/tooling deps (pip fallback)
@@ -56,7 +67,8 @@ revolt_ble_toolkit/
 │       │   └── widgets.py       # Table model, filter proxy, timeline widget
 │       └── live/                # Live BLE client (Bleak) (`revolt-ble-live`)
 │           ├── client.py
-│           └── cli.py
+│           ├── cli.py
+│           └── models.py
 ├── docs/
 │   ├── hci_parser.md         # Module 1 documentation
 │   └── att_parser.md         # Module 2 documentation
@@ -66,10 +78,16 @@ revolt_ble_toolkit/
 ├── MODULE_REFERENCE.md       # what each module does
 ├── API_REFERENCE.md          # the public symbol list
 ├── PROJECT_AUDIT.md          # v1.0 production-readiness audit
+├── FINAL_STATUS.md           # condensed completion/readiness summary
+├── RELEASE_NOTES.md          # v1.0.0 release announcement
 ├── REMAINING_TASKS.md        # the concrete, categorized backlog
 ├── KNOWN_LIMITATIONS.md      # confirmed vs. heuristic vs. unknown protocol facts
 ├── ROADMAP.md                # forward-looking direction
 ├── CHANGELOG.md
+├── HISTORY_SANITIZATION.md   # git-history PII incident: full remediation procedure
+├── SECURITY_RELEASE_CHECKLIST.md  # pre-public-release security checklist
+├── RELEASE_CHECKLIST.md      # open-source packaging/release-infra checklist
+├── CLEANUP_REPORT.md         # non-production-artifact removal log
 ├── VERSION
 └── tests/
     ├── test_cli/
@@ -219,3 +237,15 @@ truth for build and tool configuration (PEP 517/518/621).
 
 See [ROADMAP.md](ROADMAP.md) for direction and [REMAINING_TASKS.md](REMAINING_TASKS.md)
 for the concrete, estimated backlog.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the PR process and
+[DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) for setup/conventions. Please also
+read the [Code of Conduct](CODE_OF_CONDUCT.md). Every push/PR is scanned for
+secrets with Gitleaks — see [SECRETS_POLICY.md](SECRETS_POLICY.md). Found a
+security issue? See [SECURITY.md](SECURITY.md) instead of opening a public issue.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

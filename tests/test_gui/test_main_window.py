@@ -92,6 +92,51 @@ def test_export_and_compare_actions_disabled_until_capture_loaded(tmp_path: Path
     assert window.compare_action.isEnabled() is True
 
 
+def test_category_filter_hides_non_matching_rows(tmp_path: Path) -> None:
+    btsnoop_path = tmp_path / "btsnoop_hci.log"
+    _write_btsnoop(btsnoop_path)
+    window = _make_window(tmp_path)
+    window.load_capture(btsnoop_path)
+    actual_category = window._model.packet_at(0).category.value  # type: ignore[union-attr]
+
+    matching_index = window.category_filter.findData(actual_category)
+    window.category_filter.setCurrentIndex(matching_index)
+    assert window._proxy.rowCount() == 1
+
+    other_category = next(
+        window.category_filter.itemData(i)
+        for i in range(window.category_filter.count())
+        if window.category_filter.itemData(i) not in (None, actual_category)
+    )
+    window.category_filter.setCurrentIndex(window.category_filter.findData(other_category))
+    assert window._proxy.rowCount() == 0
+
+
+def test_selecting_row_populates_hex_and_ascii_views(tmp_path: Path) -> None:
+    btsnoop_path = tmp_path / "btsnoop_hci.log"
+    _write_btsnoop(btsnoop_path)
+    window = _make_window(tmp_path)
+    window.load_capture(btsnoop_path)
+
+    window.table.selectRow(0)
+
+    assert "64" in window.hex_view.toPlainText()  # the packet's single value byte, 0x64
+    assert window.ascii_view.toPlainText() != ""
+
+
+def test_seek_to_index_selects_the_target_row(tmp_path: Path) -> None:
+    btsnoop_path = tmp_path / "btsnoop_hci.log"
+    _write_btsnoop(btsnoop_path)
+    window = _make_window(tmp_path)
+    window.load_capture(btsnoop_path)
+
+    window._seek_to_index(0)
+
+    selected = window.table.selectionModel().selectedRows()
+    assert len(selected) == 1
+    assert selected[0].row() == 0
+
+
 def test_recent_paths_ignores_unexpected_settings_value_shape(tmp_path: Path) -> None:
     window = _make_window(tmp_path)
     window._settings.setValue(_SETTINGS_RECENT_KEY, 42)  # not a str or list — malformed value

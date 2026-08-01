@@ -45,7 +45,9 @@ revolt-ble-gui = "revolt_ble_toolkit.gui.app:main"
 revolt-ble-live = "revolt_ble_toolkit.live.cli:main"
 
 [project.urls]
-Repository = "https://example.com/revolt-ble-toolkit"
+Repository = "https://github.com/MannDangrechiya/revolt_ble_toolkit"
+Issues = "https://github.com/MannDangrechiya/revolt_ble_toolkit/issues"
+Changelog = "https://github.com/MannDangrechiya/revolt_ble_toolkit/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/revolt_ble_toolkit"]
@@ -67,7 +69,6 @@ dev-dependencies = [
 line-length = 100
 target-version = "py312"
 src = ["src", "tests"]
-extend-exclude = ["scratch"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "RUF"]
@@ -88,7 +89,6 @@ quote-style = "double"
 [tool.black]
 line-length = 100
 target-version = ["py312"]
-extend-exclude = "^/scratch/"
 
 # --- Mypy (static typing) --------------------------------------------------
 
@@ -102,10 +102,6 @@ strict = true
 warn_unused_configs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
-
-[[tool.mypy.overrides]]
-module = "tests.*"
-disallow_untyped_defs = false
 
 # --- Pytest -----------------------------------------------------------------
 

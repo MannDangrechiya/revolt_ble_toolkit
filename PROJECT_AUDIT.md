@@ -45,7 +45,7 @@ revolt_ble_toolkit/
 | Module 6 — Capture Comparator | Done, heuristic by design | 95% | 100% coverage. Same heuristic-accuracy caveat as Module 4. |
 | Capture Report Exporter | Done | 100% | 100% coverage, including the OSError→ExportError path added this audit. |
 | CLI (`revolt-ble-toolkit`) | Done | 100% | Was a pure stub before this audit (0% coverage, no logic) — now fully wired to the pipeline/exporter/comparator, 99% coverage (only the untestable `if __name__` guard is missing). |
-| Desktop GUI (`gui`, PySide6) | Done | 95% | Core features (drag-drop, search/filter, timeline, hex/ASCII, stats) plus File menu Export Report/Compare with/recent-captures/keyboard shortcuts, all tested with an isolated ini-backed `QSettings`. 89% coverage on `main_window.py` — the gap is paint/mouse-event and drag-drop glue that isn't meaningfully unit-testable without a running display; not treated as a defect (see KNOWN_LIMITATIONS.md). No progress bar/loading indicator was added: real profiling (KNOWN_LIMITATIONS.md) shows full-pipeline load time is ~27ms even including export/report generation, so a loading indicator would be theater, not a fix for an actual wait. |
+| Desktop GUI (`gui`, PySide6) | Done | 95% | Core features (drag-drop, search/filter, timeline, hex/ASCII, stats) plus File menu Export Report/Compare with/recent-captures/keyboard shortcuts, all tested with an isolated ini-backed `QSettings`. 95% coverage on `main_window.py` (11 lines missing: drag-and-drop only, which genuinely needs a real OS drag session), 91% on `widgets.py`; `app.py` (dark theme + entry point) is real code but 0% covered — no test file exists for it yet (see KNOWN_LIMITATIONS.md). No progress bar/loading indicator was added: real profiling (KNOWN_LIMITATIONS.md) shows full-pipeline load time is tens of milliseconds even including export/report generation, so a loading indicator would be theater, not a fix for an actual wait. |
 | Live BLE Client (`live`, Bleak) | Done | 95% | 99% coverage against a fake Bleak backend (no real Bluetooth adapter available in this environment — see below). Real-hardware validation is the one thing this audit cannot do. |
 | Configuration System | Done | 100% | 100% coverage after this audit added env-override and malformed-TOML tests. |
 | Core exception hierarchy | Done | 100% | Trimmed to 4 exceptions, all now provably used (`AnalysisError` was dead and removed). |
@@ -91,8 +91,8 @@ As of this audit, on the full repository (`src/` + `tests/`, `scratch/` excluded
 - **Ruff:** 0 findings.
 - **Black:** 0 files would reformat.
 - **MyPy (`--strict`):** 0 errors across 61 files.
-- **Pytest:** 142/142 passing, 0 skipped, 0 xfailed.
-- **Coverage:** 92% line coverage overall (up from 86% at the start of this audit).
+- **Pytest:** 150/150 passing, 0 skipped, 0 xfailed.
+- **Coverage:** 93% line coverage overall (up from 86% at the start of this audit).
 - **Import cycles:** none. (One real near-miss was found and fixed during the Module 6/10 work: `analyzers.compare` needing pipeline orchestration that itself depends on `analyzers.gatt`/`analyzers.protocol` — resolved with a `TYPE_CHECKING`-guarded import plus a function-local import, verified by importing every module as the first import in five separate fresh processes.)
 - **Dead code:** none remaining (see Technical Debt — a real cluster was found and removed this audit).
 - **Duplicate logic:** none found. `handle_uuid_map()` (GATT→UUID lookup) is defined once in `analyzers.gatt` and reused by `analyzers.protocol`, `analyzers.compare`, and the CLI/GUI rather than reimplemented.
@@ -110,8 +110,9 @@ As of this audit, on the full repository (`src/` + `tests/`, `scratch/` excluded
 - **[Fixed this audit]** `GattAnalyzer._parse_services`/`_parse_characteristics` would raise an unhandled `struct.error` — a crash, not a graceful failure — if a capture declared a discovery-entry length shorter than the format needs to unpack. A hostile or corrupted capture file could crash the whole analysis pipeline. Fixed with a minimum-length guard + warning log, matching the pattern already used for truncated ACL headers.
 - **[Fixed this audit]** The CLI was 100% placeholder — three subcommands that only logged "not implemented yet." Nothing in the whole toolkit was reachable without writing Python.
 - **[Fixed this audit]** `ConfigurationError`/`ExportError` were defined in the exception hierarchy but never raised anywhere; malformed TOML crashed with a raw `tomllib.TOMLDecodeError`, and a failed report write crashed with a raw `OSError`.
+- **[Fixed in the final release audit]** `BtSnoopHciParser` raised an unhandled `OverflowError` on a record whose timestamp field was far enough from the real BTSnoop epoch offset to fall outside Python's representable `datetime` range (e.g. a zero-filled/corrupted timestamp) — found by an independent verification pass, not by the original test suite. Fixed the same way as the other malformed-data cases: logged and skipped, not raised.
 - Heuristic classification (Modules 4, 6) is tuned against one real device's capture. It's honest about being a heuristic (confidence scores throughout), but its *accuracy* on other devices is unverified — this can only improve with more real captures, not more code (see KNOWN_LIMITATIONS.md).
-- The pipeline fully materializes a capture's packets into memory (`list(...)` in `run_pipeline`) rather than streaming end to end. **Measured, not assumed:** 27.3 ms and 2.33 MiB peak for the real 716 KiB / 4,706-packet capture available; linearly extrapolated to ~36 s / ~3.3 GiB at 1 GiB, the scale where this would start to matter. See KNOWN_LIMITATIONS.md for the full profiling breakdown. Documented rather than rewritten — see REMAINING_TASKS.md for why.
+- The pipeline fully materializes a capture's packets into memory (`list(...)` in `run_pipeline`) rather than streaming end to end. **Measured, not assumed**, against a synthetic reproducible 174.7 KiB / 4,706-packet capture (replacing an earlier measurement taken against a real, non-reproducible personal device capture — see CHANGELOG.md): full pipeline 72–122 ms across 3 runs, peak memory a stable 3.11 MiB; linearly extrapolated to ~12 minutes / ~18 GiB at 1 GiB, the scale where this would start to matter. See KNOWN_LIMITATIONS.md for the full profiling breakdown. Documented rather than rewritten — see REMAINING_TASKS.md for why.
 
 ## Technical Debt (found and resolved this audit)
 
@@ -142,7 +143,7 @@ See REMAINING_TASKS.md for the full, categorized list. In brief: no PCAP export,
 
 - **Heuristic misclassification risk:** Modules 4 and 6's confidence scores are honest, but a user who ignores them and treats a 0.4-confidence guess as fact would be wrong. Mitigated by design (every output carries its confidence and reason), not by code.
 - **No real-hardware validation this audit:** the live BLE client (Module 10) is tested against a faithful fake of Bleak's API (verified against the actually-installed library's real signatures, not assumed from memory), but no physical Bluetooth adapter was available to validate the real connect/pair/reconnect flow end to end in this environment.
-- **Large-capture memory use:** measured (27.3 ms / 2.33 MiB at 716 KiB), extrapolated (~36 s / ~3.3 GiB at 1 GiB), not fixed — no capture near that scale exists to justify the rewrite risk yet. See Weaknesses above and REMAINING_TASKS.md.
+- **Large-capture memory use:** measured (72–122 ms / 3.11 MiB at 174.7 KiB, synthetic capture), extrapolated (~12 min / ~18 GiB at 1 GiB), not fixed — no capture near that scale exists to justify the rewrite risk yet. See Weaknesses above and REMAINING_TASKS.md.
 
 ## Future Improvements
 
