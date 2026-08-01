@@ -21,7 +21,7 @@ captured in **Android HCI Snoop Logs**.
 
 ## Project layout
 
-```
+```text
 revolt_ble_toolkit/
 ├── pyproject.toml            # Project metadata, dependencies, tool config (Ruff/Black/MyPy/pytest)
 ├── requirements.txt          # Runtime deps (pip fallback)
@@ -56,7 +56,8 @@ revolt_ble_toolkit/
 │       │   └── widgets.py       # Table model, filter proxy, timeline widget
 │       └── live/                # Live BLE client (Bleak) (`revolt-ble-live`)
 │           ├── client.py
-│           └── cli.py
+│           ├── cli.py
+│           └── models.py
 ├── docs/
 │   ├── hci_parser.md         # Module 1 documentation
 │   └── att_parser.md         # Module 2 documentation

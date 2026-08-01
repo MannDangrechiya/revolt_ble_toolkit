@@ -19,8 +19,8 @@ Every piece of decoded information is labeled by how certain it actually is. Wir
 
 ## Quality bar for this release
 
-- 142 tests, all passing.
-- 92% line coverage — the remaining 8% is thin UI/CLI entry-point wiring and a handful of documented, deliberately-untestable-without-hardware paths, not untested logic.
+- 150 tests, all passing.
+- 93% line coverage — the remaining 7% is thin UI/CLI entry-point wiring and a handful of documented, deliberately-untestable-without-hardware paths, not untested logic.
 - Zero Ruff findings, zero Black reformats, zero MyPy errors (`--strict`) across the whole `src/`+`tests/` tree.
 - Zero known import cycles, zero dead code, zero unused modules — verified by direct usage search, not assumed.
 - A real crash bug (malformed GATT discovery data could raise an unhandled `struct.error`) was found and fixed as part of getting to this release, not left for later.

@@ -11,10 +11,14 @@
             "id": "c33a2464541daf21",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "RELEASE_AUDIT.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "RELEASE_AUDIT"
             }
           }
         ]
@@ -95,6 +99,7 @@
             "state": {
               "type": "backlink",
               "state": {
+                "file": "RELEASE_AUDIT.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -113,6 +118,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
+                "file": "RELEASE_AUDIT.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
@@ -155,6 +161,7 @@
             "state": {
               "type": "outline",
               "state": {
+                "file": "RELEASE_AUDIT.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -183,17 +190,46 @@
   },
   "active": "c33a2464541daf21",
   "lastOpenFiles": [
-    "logs/revolt_ble_toolkit.log",
-    "API_REFERENCE.md.tmp.19672.539653157b12",
-    "MODULE_REFERENCE.md.tmp.19672.2f9eddbfca9a",
-    "MODULE_REFERENCE.md.tmp.19672.288184fb1510",
-    "PROJECT_AUDIT.md.tmp.19672.9b3b471ef7f5",
-    "PROJECT_AUDIT.md.tmp.19672.14717a1328c2",
-    "FINAL_STATUS.md.tmp.19672.260634ca0335",
+    "flutter_sdk - Copy/example/ios/Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage/Sources/FlutterGeneratedPluginSwiftPackage/FlutterGeneratedPluginSwiftPackage.swift",
+    "flutter_sdk - Copy/example/ios/Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage/Sources/FlutterGeneratedPluginSwiftPackage",
+    "flutter_sdk - Copy/example/ios/Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage/Sources",
+    "flutter_sdk - Copy/example/ios/Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage/Package.swift",
+    "flutter_sdk - Copy/example/ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme",
+    "flutter_sdk - Copy/example/ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings",
+    "flutter_sdk - Copy/example/ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist",
+    "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md",
+    "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@3x.png",
+    "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@2x.png",
+    "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage.png",
+    "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/LaunchImage.imageset/Contents.json",
+    "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-83.5x83.5@2x.png",
+    "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@2x.png",
+    "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@1x.png",
+    "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@3x.png",
+    "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@2x.png",
+    "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@3x.png",
+    "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@2x.png",
+    "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json",
+    "flutter_sdk - Copy/example/ios/Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage",
+    "flutter_sdk - Copy/example/ios/Runner.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings",
+    "flutter_sdk - Copy/example/README.md",
+    "flutter_sdk - Copy/README.md",
+    "flutter_sdk - Copy/CHANGELOG.md",
+    "PROJECT_AUDIT.md",
+    "RELEASE_AUDIT.md",
+    "FINAL_STATUS.md",
+    "Untitled.canvas",
+    "flutter_sdk/example/ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md",
+    "ROADMAP.md",
+    "REMAINING_TASKS.md",
+    "RELEASE_NOTES.md",
+    "PIPELINE.md",
+    "MODULE_REFERENCE.md",
+    "KNOWN_LIMITATIONS.md",
+    "DEVELOPER_GUIDE.md",
+    "CHANGELOG.md",
     "ARCHITECTURE.md",
-    "FINAL_STATUS.md.tmp.19672.d493bbabc4df",
-    "FINAL_STATUS.md.tmp.19672.c03fd942d1c8",
-    "CHANGELOG.md.tmp.19672.af547aa967d1",
+    "API_REFERENCE.md",
     "docs/hci_parser.md"
   ]
 }

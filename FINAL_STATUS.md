@@ -45,8 +45,8 @@ Full detail in `ROADMAP.md` and `REMAINING_TASKS.md`. Highest-value next step is
 
 ## Production Readiness
 
-- **Tests:** 142 passing, 0 failing, 0 skipped.
-- **Coverage:** 92% line coverage overall.
+- **Tests:** 150 passing, 0 failing, 0 skipped.
+- **Coverage:** 93% line coverage overall.
 - **Static analysis:** Ruff (0 findings), Black (0 reformats), MyPy `--strict` (0 errors) — all across the full `src/`+`tests/` tree.
 - **Import cycles:** none (one near-miss found and fixed with a `TYPE_CHECKING` guard; verified by testing all five plausible first-import orderings in separate fresh processes).
 - **Dead code:** none (a real cluster was found via direct usage search and removed this release — see CHANGELOG.md).

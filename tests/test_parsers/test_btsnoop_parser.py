@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import struct
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -212,3 +213,19 @@ class TestErrorHandling:
 
         with pytest.raises(ParsingError):
             list(BtSnoopHciParser().parse_file(path))
+
+    def test_out_of_range_timestamp_is_skipped_not_crashed(self, tmp_path: Path) -> None:
+        # A raw ts_usec far from BTSNOOP_EPOCH_OFFSET_USEC (e.g. 0, from a zero-filled
+        # or corrupted record) previously raised an unhandled OverflowError from
+        # datetime arithmetic instead of being logged and skipped like other
+        # malformed-data cases.
+        payload = command_packet_data()
+        bad_record_header = struct.pack(c.RECORD_HEADER_STRUCT, len(payload), len(payload), 0, 0, 0)
+        good_record = build_record(data=payload, received=False, timestamp=datetime.now(tz=UTC))
+        data = build_file_header() + bad_record_header + payload + good_record
+        path = _write(tmp_path, "btsnoop_hci.log", data)
+
+        packets = list(BtSnoopHciParser().parse_file(path))
+
+        (packet,) = packets  # only the good record survives; the bad one is skipped
+        assert packet.number == 2

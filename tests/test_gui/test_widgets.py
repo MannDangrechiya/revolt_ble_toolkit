@@ -13,6 +13,8 @@ import pytest
 
 pytest.importorskip("PySide6")
 
+from PySide6.QtCore import QEvent, QPointF, Qt
+from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import QApplication
 
 from revolt_ble_toolkit.analyzers.protocol import ClassifiedPacket, PacketCategory
@@ -72,6 +74,10 @@ def test_format_ascii_dots_non_printable_bytes() -> None:
     text = format_ascii(b"\x00\x01A")
     assert "A" in text
     assert "." in text
+
+
+def test_format_ascii_empty() -> None:
+    assert format_ascii(b"") == "(empty)"
 
 
 def test_table_model_dimensions() -> None:
@@ -172,3 +178,61 @@ def test_timeline_handles_empty_input() -> None:
     timeline.set_packets([])
 
     assert timeline._counts == []
+
+
+def test_timeline_click_emits_bucket_clicked_with_first_index() -> None:
+    packets = [
+        _classified(
+            i,
+            AttOpcode.HANDLE_VALUE_NOTIFICATION,
+            PacketCategory.TELEMETRY,
+            when=_NOW + timedelta(seconds=i),
+        )
+        for i in range(5)
+    ]
+    timeline = TimelineWidget()
+    timeline.resize(800, 60)
+    timeline.set_packets(packets)
+    clicked: list[int] = []
+    timeline.bucket_clicked.connect(clicked.append)
+
+    event = QMouseEvent(
+        QEvent.Type.MouseButtonPress,
+        QPointF(0.0, 30.0),  # leftmost pixel -> bucket 0 -> first packet
+        QPointF(0.0, 30.0),
+        Qt.MouseButton.LeftButton,
+        Qt.MouseButton.LeftButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    timeline.mousePressEvent(event)
+
+    assert clicked == [0]
+
+
+def test_timeline_click_with_no_packets_does_not_emit() -> None:
+    timeline = TimelineWidget()
+    timeline.resize(800, 60)
+    clicked: list[int] = []
+    timeline.bucket_clicked.connect(clicked.append)
+
+    event = QMouseEvent(
+        QEvent.Type.MouseButtonPress,
+        QPointF(0.0, 30.0),
+        QPointF(0.0, 30.0),
+        Qt.MouseButton.LeftButton,
+        Qt.MouseButton.LeftButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    timeline.mousePressEvent(event)
+
+    assert clicked == []
+
+
+def test_timeline_paint_event_runs_without_error() -> None:
+    timeline = TimelineWidget()
+    timeline.resize(800, 60)
+    timeline.set_packets(
+        [_classified(1, AttOpcode.HANDLE_VALUE_NOTIFICATION, PacketCategory.TELEMETRY)]
+    )
+
+    timeline.repaint()  # drives a real paintEvent() call through Qt's offscreen backend
