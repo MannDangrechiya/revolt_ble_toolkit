@@ -143,10 +143,13 @@ truth for build and tool configuration (PEP 517/518/621).
 - **Module 1 — BTSnoop HCI parser** ([docs/hci_parser.md](docs/hci_parser.md)):
   parses `btsnoop_hci.log` into `HciPacket` objects (timestamp, direction,
   size, sequence number, packet type, and ACL connection handles/flags).
+- **Module 2 — ATT parser** ([docs/att_parser.md](docs/att_parser.md)):
+  decodes ATT PDUs (Exchange MTU, Read Request/Response, Write
+  Request/Command, Notification, Indication) out of `HciPacket` objects.
 
 ## Roadmap (future milestones)
 
-- L2CAP / ATT / GATT decoding of ACL payloads
-- BLE packet/PDU analysis (advertising, pairing, etc.)
+- Reports/summaries over decoded ATT traffic
+- GATT semantics (service/characteristic/descriptor interpretation)
 - Export formats (JSON, CSV, PCAP)
 - CLI subcommand implementations
