@@ -28,8 +28,11 @@ class AttOpcode(IntEnum):
 
     EXCHANGE_MTU_REQUEST = 0x02
     EXCHANGE_MTU_RESPONSE = 0x03
+    FIND_INFORMATION_RESPONSE = 0x05  # descriptor discovery
+    READ_BY_TYPE_RESPONSE = 0x09  # characteristic discovery
     READ_REQUEST = 0x0A
     READ_RESPONSE = 0x0B
+    READ_BY_GROUP_TYPE_RESPONSE = 0x11  # service discovery
     WRITE_REQUEST = 0x12
     WRITE_COMMAND = 0x52
     HANDLE_VALUE_NOTIFICATION = 0x1B
