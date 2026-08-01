@@ -1,13 +1,11 @@
 """Analysis result exporters.
 
-``BaseExporter`` is the generic extension point for future pipeline
-integration; ``generate_capture_report`` is the concrete, standalone
-exporter that writes commands.csv/notifications.csv/statistics.json/summary.md.
+``generate_capture_report`` writes commands.csv/notifications.csv/
+statistics.json/summary.md for a single capture.
 """
 
 from __future__ import annotations
 
-from revolt_ble_toolkit.exporters.base import BaseExporter
 from revolt_ble_toolkit.exporters.capture_report import (
     CaptureReportPaths,
     PipelineResult,
@@ -17,7 +15,6 @@ from revolt_ble_toolkit.exporters.capture_report import (
 )
 
 __all__ = [
-    "BaseExporter",
     "CaptureReportPaths",
     "PipelineResult",
     "build_statistics",

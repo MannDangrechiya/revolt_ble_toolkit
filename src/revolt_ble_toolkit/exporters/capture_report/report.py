@@ -17,6 +17,7 @@ from pathlib import Path
 
 from revolt_ble_toolkit.analyzers.gatt import Service, handle_uuid_map
 from revolt_ble_toolkit.analyzers.protocol import ClassifiedPacket, generate_report
+from revolt_ble_toolkit.core.exceptions import ExportError
 from revolt_ble_toolkit.parsers.att import AttOpcode, AttPacket
 from revolt_ble_toolkit.parsers.btsnoop import HciPacket
 from revolt_ble_toolkit.pipeline import PipelineResult, build_statistics, run_pipeline
@@ -51,9 +52,12 @@ class CaptureReportPaths:
 
 
 def generate_capture_report(btsnoop_path: str | Path, out_dir: str | Path) -> CaptureReportPaths:
-    """Parse ``btsnoop_path`` and write the four report files into ``out_dir``."""
+    """Parse ``btsnoop_path`` and write the four report files into ``out_dir``.
+
+    :raises ExportError: If ``out_dir`` can't be created or any report file
+        can't be written (e.g. permission denied, disk full).
+    """
     out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
     btsnoop_path = Path(btsnoop_path)
 
     result = run_pipeline(btsnoop_path)
@@ -72,16 +76,23 @@ def generate_capture_report(btsnoop_path: str | Path, out_dir: str | Path) -> Ca
         summary_md=out_dir / "summary.md",
     )
 
-    _write_att_csv(paths.commands_csv, att_packets, AttOpcode.WRITE_COMMAND, handle_uuids)
-    _write_att_csv(
-        paths.notifications_csv, att_packets, AttOpcode.HANDLE_VALUE_NOTIFICATION, handle_uuids
-    )
-    paths.statistics_json.write_text(
-        json.dumps(build_statistics(btsnoop_path, result), indent=2) + "\n", encoding="utf-8"
-    )
-    _write_summary_md(
-        paths.summary_md, btsnoop_path, hci_packets, att_packets, services, classified
-    )
+    try:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        _write_att_csv(paths.commands_csv, att_packets, AttOpcode.WRITE_COMMAND, handle_uuids)
+        _write_att_csv(
+            paths.notifications_csv,
+            att_packets,
+            AttOpcode.HANDLE_VALUE_NOTIFICATION,
+            handle_uuids,
+        )
+        paths.statistics_json.write_text(
+            json.dumps(build_statistics(btsnoop_path, result), indent=2) + "\n", encoding="utf-8"
+        )
+        _write_summary_md(
+            paths.summary_md, btsnoop_path, hci_packets, att_packets, services, classified
+        )
+    except OSError as exc:
+        raise ExportError(f"Failed to write report to {out_dir}: {exc}") from exc
 
     return paths
 

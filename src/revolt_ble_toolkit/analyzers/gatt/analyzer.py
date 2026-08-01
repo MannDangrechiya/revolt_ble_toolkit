@@ -28,7 +28,18 @@ from revolt_ble_toolkit.analyzers.gatt.models import (
     Descriptor,
     Service,
 )
+from revolt_ble_toolkit.config.logging_config import get_logger
 from revolt_ble_toolkit.parsers.att import AttOpcode, AttPacket
+
+logger = get_logger(__name__)
+
+# Minimum bytes a discovery response's declared per-entry length must cover
+# before its fixed fields (handles/properties) can be unpacked at all. A
+# capture that declares a shorter length is malformed — the whole response
+# is skipped rather than raising, matching how Module 1 treats a truncated
+# ACL header.
+_SERVICE_ENTRY_MIN_LENGTH = 4  # start handle (2) + end handle (2)
+_CHARACTERISTIC_ENTRY_MIN_LENGTH = 5  # decl handle (2) + properties (1) + value handle (2)
 
 
 def _parse_uuid(data: bytes) -> str:
@@ -128,7 +139,12 @@ class GattAnalyzer:
         if not data:
             return []
         entry_length = data[0]
-        if entry_length <= 0:
+        if entry_length < _SERVICE_ENTRY_MIN_LENGTH:
+            logger.warning(
+                "Read By Group Type Response declares entry length %d (< %d); skipping.",
+                entry_length,
+                _SERVICE_ENTRY_MIN_LENGTH,
+            )
             return []
         body = data[1:]
         results = []
@@ -147,7 +163,12 @@ class GattAnalyzer:
         if not data:
             return []
         entry_length = data[0]
-        if entry_length <= 0:
+        if entry_length < _CHARACTERISTIC_ENTRY_MIN_LENGTH:
+            logger.warning(
+                "Read By Type Response declares entry length %d (< %d); skipping.",
+                entry_length,
+                _CHARACTERISTIC_ENTRY_MIN_LENGTH,
+            )
             return []
         body = data[1:]
         results = []

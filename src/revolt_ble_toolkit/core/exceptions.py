@@ -19,10 +19,6 @@ class ParsingError(ToolkitError):
     """Raised when a capture log cannot be parsed."""
 
 
-class AnalysisError(ToolkitError):
-    """Raised when analysis of parsed records fails."""
-
-
 class ExportError(ToolkitError):
     """Raised when exporting analysis results fails."""
 

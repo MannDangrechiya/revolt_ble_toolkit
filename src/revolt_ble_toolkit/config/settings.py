@@ -21,6 +21,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from revolt_ble_toolkit.core.exceptions import ConfigurationError
+
 _ENV_PREFIX = "REVOLT_"
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 _DEFAULT_CONFIG_FILE = _PROJECT_ROOT / "config" / "default.toml"
@@ -64,18 +66,25 @@ class AppSettings:
 def _read_toml(path: Path) -> dict[str, Any]:
     if not path.is_file():
         return {}
-    with path.open("rb") as handle:
-        return tomllib.load(handle)
+    try:
+        with path.open("rb") as handle:
+            return tomllib.load(handle)
+    except tomllib.TOMLDecodeError as exc:
+        raise ConfigurationError(f"{path}: invalid TOML ({exc})") from exc
 
 
 def _coerce(raw_value: str, reference: Any) -> Any:
-    """Coerce an environment variable string to the type of ``reference``."""
+    """Coerce an environment variable string to the type of ``reference``.
+
+    Only ``environment``/``debug`` and ``LoggingSettings`` fields go through
+    here (see :func:`_apply_env_overrides`) — str, bool, and int cover all of
+    them today. Add a ``Path`` branch if a path-typed setting ever needs an
+    env override too.
+    """
     if isinstance(reference, bool):
         return raw_value.strip().lower() in {"1", "true", "yes", "on"}
     if isinstance(reference, int):
         return int(raw_value)
-    if isinstance(reference, Path):
-        return Path(raw_value)
     return raw_value
 
 

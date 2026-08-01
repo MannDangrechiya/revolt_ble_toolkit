@@ -133,6 +133,42 @@ def test_characteristic_outside_any_service_range_is_dropped() -> None:
     assert service.characteristics == ()
 
 
+def test_malformed_service_entry_length_is_skipped_not_crashed() -> None:
+    # Declares entry_length=2 (too short for a 4-byte start+end handle pair)
+    # with 2 bytes of bogus body — must not raise struct.error.
+    malformed = bytes([2]) + b"\x01\x02"
+    packets = [_att(AttOpcode.READ_BY_GROUP_TYPE_RESPONSE, malformed)]
+
+    assert GattAnalyzer().analyze(packets) == []
+
+
+def test_malformed_characteristic_entry_length_is_skipped_not_crashed() -> None:
+    # Declares entry_length=3 (too short for the 5-byte fixed fields).
+    malformed = bytes([3]) + b"\x01\x02\x03"
+    packets = [
+        _att(AttOpcode.READ_BY_GROUP_TYPE_RESPONSE, _services_response((1, 10, 0x1800))),
+        _att(AttOpcode.READ_BY_TYPE_RESPONSE, malformed),
+    ]
+
+    (service,) = GattAnalyzer().analyze(packets)
+
+    assert service.characteristics == ()
+
+
+def test_empty_discovery_response_bodies_are_skipped_not_crashed() -> None:
+    packets = [
+        _att(AttOpcode.READ_BY_GROUP_TYPE_RESPONSE, b""),
+        _att(AttOpcode.READ_BY_TYPE_RESPONSE, b""),
+        _att(AttOpcode.FIND_INFORMATION_RESPONSE, b""),
+    ]
+
+    assert GattAnalyzer().analyze(packets) == []
+
+
+def test_parse_uuid_unexpected_length_falls_back_to_raw_hex() -> None:
+    assert _parse_uuid(b"\x01\x02\x03\x04") == "01020304"
+
+
 def test_ignores_non_discovery_att_packets() -> None:
     packets = [_att(AttOpcode.READ_RESPONSE, b"\x01\x02\x03")]
 

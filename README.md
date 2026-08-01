@@ -3,9 +3,13 @@
 A professional toolkit for reverse engineering Bluetooth Low Energy (BLE) traffic
 captured in **Android HCI Snoop Logs**.
 
-> **Status:** Foundation + Modules 1-4 (HCI/ATT parsing, GATT discovery,
-> heuristic protocol classification) + a PySide6 desktop GUI. GATT semantics
-> (interpreting characteristic/descriptor values) are the next milestone.
+> **Status: v1.0.0.** All modules complete: HCI/ATT parsing, GATT discovery,
+> heuristic protocol classification, cross-capture comparison, a desktop GUI,
+> a live BLE client, and a Flutter mobile SDK — all backed by a fully-wired
+> CLI. See [PROJECT_AUDIT.md](PROJECT_AUDIT.md) for the full v1.0
+> production-readiness audit, [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md)
+> for what's confirmed vs. heuristic vs. still unknown about the protocol,
+> and [ROADMAP.md](ROADMAP.md) for what's next.
 
 ## Requirements
 
@@ -29,61 +33,72 @@ revolt_ble_toolkit/
 │   └── revolt_ble_toolkit/
 │       ├── __init__.py
 │       ├── __main__.py       # `python -m revolt_ble_toolkit`
-│       ├── cli/               # CLI wiring only — no business logic
+│       ├── pipeline.py         # Orchestrates parse -> ATT -> GATT -> classify
+│       ├── cli/                # `revolt-ble-toolkit`: parse/analyze/export/compare
 │       │   └── main.py
 │       ├── config/            # Layered settings (dataclasses) + logging setup
 │       │   ├── settings.py
 │       │   └── logging_config.py
-│       ├── core/               # Domain layer: models, enums, exceptions, interfaces
-│       │   ├── models.py
-│       │   ├── enums.py
-│       │   ├── exceptions.py
-│       │   └── interfaces.py
+│       ├── core/               # Toolkit-wide exception hierarchy only
+│       │   └── exceptions.py
 │       ├── parsers/            # Capture-log parsers
-│       │   ├── base.py         # Generic extension point (future pipeline use)
 │       │   ├── btsnoop/        # Module 1: BTSnoop HCI parser
 │       │   └── att/            # Module 2: ATT PDU parser
 │       ├── analyzers/
-│       │   ├── base.py         # Generic extension point (future pipeline use)
 │       │   ├── gatt/           # Module 3: GATT hierarchy analyzer
-│       │   └── protocol/       # Module 4: heuristic protocol classifier
+│       │   ├── protocol/       # Module 4: heuristic protocol classifier
+│       │   └── compare/        # Module 6: cross-capture comparator
 │       ├── exporters/
-│       │   ├── base.py         # Generic extension point (future pipeline use)
 │       │   └── capture_report/ # commands.csv/notifications.csv/statistics.json/summary.md
 │       ├── gui/                 # PySide6 desktop GUI
 │       │   ├── app.py           # Entry point + dark theme (`revolt-ble-gui`)
 │       │   ├── main_window.py   # Drag-and-drop, filters/search, hex/ASCII/stats panes
 │       │   └── widgets.py       # Table model, filter proxy, timeline widget
-│       └── utils/              # Small, dependency-free helpers
+│       └── live/                # Live BLE client (Bleak) (`revolt-ble-live`)
+│           ├── client.py
+│           └── cli.py
 ├── docs/
 │   ├── hci_parser.md         # Module 1 documentation
 │   └── att_parser.md         # Module 2 documentation
+├── ARCHITECTURE.md           # why the codebase is shaped this way
+├── PIPELINE.md               # the end-to-end data flow
+├── DEVELOPER_GUIDE.md        # setup, conventions, how to add a module
+├── MODULE_REFERENCE.md       # what each module does
+├── API_REFERENCE.md          # the public symbol list
+├── PROJECT_AUDIT.md          # v1.0 production-readiness audit
+├── REMAINING_TASKS.md        # the concrete, categorized backlog
+├── KNOWN_LIMITATIONS.md      # confirmed vs. heuristic vs. unknown protocol facts
+├── ROADMAP.md                # forward-looking direction
+├── CHANGELOG.md
+├── VERSION
 └── tests/
+    ├── test_cli/
     ├── test_config/
     ├── test_core/
     ├── test_parsers/
     ├── test_analyzers/
     ├── test_exporters/
-    └── test_gui/
+    ├── test_gui/
+    └── test_live/
 ```
 
 ## Architecture
 
-The toolkit is organized around a small domain layer (`core`) that defines
-**interfaces** (`LogParser`, `PacketAnalyzer`, `ResultExporter`) and **models**
-(`CaptureFile`, `ParsedRecord`, `AnalysisResult`) as immutable dataclasses.
-Concrete implementations live in dedicated packages (`parsers`, `analyzers`,
-`exporters`) and depend on `core`, never the other way around — this keeps the
-domain layer stable while implementations can be added freely
-(Dependency Inversion / Open-Closed principles).
+Every module owns its own strongly-typed dataclasses (`HciPacket`, `AttPacket`,
+`Service`/`Characteristic`, `ClassifiedPacket`, `HandleDiff`, ...) rather than
+conforming to a shared generic envelope — an earlier generic
+interface/base-class layer was tried in the foundation and never adopted by
+any of the six parser/analyzer/exporter modules built since, so it was
+removed rather than kept as unused abstraction (see
+[ARCHITECTURE.md](ARCHITECTURE.md) for the full reasoning). `core` is just
+the shared exception hierarchy now (`ToolkitError` and its subclasses).
 
-Each extension-point package ships a `base.py` with an abstract base class
-(`BaseLogParser`, `BaseAnalyzer`, `BaseExporter`) for future pipeline
-integration. The first concrete parser, `BtSnoopHciParser`, is built
-standalone against its own rich, typed models (`HciPacket`, `AclHeader`)
-rather than forced through the generic `ParsedRecord` envelope, since
-nothing consumes that generic path yet — see
-[`docs/hci_parser.md`](docs/hci_parser.md).
+`pipeline.py` is the one place that wires the modules together end to end
+(HCI parse → ATT decode → GATT discovery → protocol classification); the CLI,
+GUI, capture-report exporter, and comparator all call into it rather than
+each re-implementing the sequence. See [PIPELINE.md](PIPELINE.md) for the
+full data flow and [MODULE_REFERENCE.md](MODULE_REFERENCE.md) /
+[API_REFERENCE.md](API_REFERENCE.md) for per-module detail.
 
 ## Configuration system
 
@@ -176,7 +191,9 @@ truth for build and tool configuration (PEP 517/518/621).
 - **Desktop GUI** (`gui`, PySide6): drag-and-drop a capture onto the window
   (or `File > Open`) to get a searchable/filterable packet table, a
   click-to-seek timeline, Hex/ASCII/Statistics panes for the selected
-  packet, and a dark theme.
+  packet, and a dark theme. The `File` menu also has `Export Report...` and
+  `Compare with...` (wired to the exporter/comparator below), a persisted
+  Recent Captures list, and keyboard shortcuts (Ctrl+O/E/Shift+C/F/Q).
 - **Module 6 — Capture comparator** (`analyzers.compare`): diffs the
   notified values of two captures of the same device by GATT attribute
   handle, and heuristically guesses which changed handle maps to battery /
@@ -194,9 +211,11 @@ truth for build and tool configuration (PEP 517/518/621).
   `connect()`/`authenticate()`/`listen()`/`write()`/`disconnect()`, same
   protocol, same raw-packets-only rule. Separate package/ecosystem (its own
   `pubspec.yaml`), not part of the Python distribution.
+  [`flutter_sdk/example/`](flutter_sdk/example/) is a runnable dark-themed
+  demo app: connect/disconnect, a live packet counter, and a scrolling raw
+  notification log (timestamp, characteristic, hex, ASCII per packet).
 
-## Roadmap (future milestones)
+## Roadmap
 
-- GATT semantics (interpreting characteristic/descriptor values, e.g. CCCD bits)
-- Export formats beyond CSV/JSON/Markdown (e.g. PCAP)
-- CLI subcommand implementations (`parse`/`analyze`/`export` are currently stubs)
+See [ROADMAP.md](ROADMAP.md) for direction and [REMAINING_TASKS.md](REMAINING_TASKS.md)
+for the concrete, estimated backlog.

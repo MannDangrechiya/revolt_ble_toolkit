@@ -1,35 +1,28 @@
-"""Core domain layer: interfaces, models, enums, and exceptions.
+"""Core domain layer: the toolkit-wide exception hierarchy.
 
-This package defines the abstractions the rest of the toolkit depends on.
-Concrete parsers, analyzers, and exporters implement these contracts rather
-than the core depending on them (Dependency Inversion Principle).
+Every toolkit-raised error derives from :class:`ToolkitError`. There is no
+generic parser/analyzer/exporter interface layer here: each concrete module
+(``parsers.btsnoop``, ``parsers.att``, ``analyzers.gatt``, ``analyzers.protocol``,
+``analyzers.compare``, ``exporters.capture_report``) defines its own rich,
+strongly-typed models instead of conforming to a shared envelope — none of
+them ended up needing one, so keeping a speculative one around would just be
+unused abstraction (see the v1.0 audit for why it was removed).
 """
 
 from __future__ import annotations
 
-from revolt_ble_toolkit.core.enums import CaptureFormat, TransportType
 from revolt_ble_toolkit.core.exceptions import (
-    AnalysisError,
     ConfigurationError,
     ExportError,
+    LiveClientError,
     ParsingError,
     ToolkitError,
 )
-from revolt_ble_toolkit.core.interfaces import LogParser, PacketAnalyzer, ResultExporter
-from revolt_ble_toolkit.core.models import AnalysisResult, CaptureFile, ParsedRecord
 
 __all__ = [
-    "AnalysisError",
-    "AnalysisResult",
-    "CaptureFile",
-    "CaptureFormat",
     "ConfigurationError",
     "ExportError",
-    "LogParser",
-    "PacketAnalyzer",
-    "ParsedRecord",
+    "LiveClientError",
     "ParsingError",
-    "ResultExporter",
     "ToolkitError",
-    "TransportType",
 ]

@@ -146,3 +146,22 @@ def compare_captures(capture1_path: str | Path, capture2_path: str | Path) -> li
     from revolt_ble_toolkit.pipeline import run_pipeline
 
     return CaptureComparator().compare(run_pipeline(capture1_path), run_pipeline(capture2_path))
+
+
+def format_diff_report(diffs: list[HandleDiff]) -> str:
+    """Render a plain-text summary of :func:`compare_captures`'s output, for the CLI/GUI alike."""
+    if not diffs:
+        return "No changed handles detected between the two captures.\n"
+
+    lines = []
+    for diff in diffs:
+        value1, value2 = diff.capture1_last_value, diff.capture2_last_value
+        before = value1.hex() if value1 is not None else "(absent)"
+        after = value2.hex() if value2 is not None else "(absent)"
+        lines.append(
+            f"handle {diff.attribute_handle} (uuid={diff.uuid or 'unknown'}): "
+            f"{diff.category.value} (confidence {diff.confidence:.2f}) — {diff.reason}"
+        )
+        lines.append(f"  before: {before}")
+        lines.append(f"  after:  {after}")
+    return "\n".join(lines) + "\n"

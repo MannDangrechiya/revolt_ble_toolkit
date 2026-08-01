@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "revolt-ble-toolkit"
-version = "0.1.0"
+version = "1.0.0"
 description = "A professional toolkit for reverse engineering Bluetooth Low Energy traffic captured in Android HCI Snoop Logs."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -12,7 +12,7 @@ license = { text = "MIT" }
 authors = [{ name = "Kunj", email = "kunj@printdeed.com" }]
 keywords = ["bluetooth", "ble", "hci", "snoop-log", "reverse-engineering", "android"]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.12",
