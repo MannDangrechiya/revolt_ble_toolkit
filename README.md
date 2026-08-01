@@ -189,6 +189,11 @@ truth for build and tool configuration (PEP 517/518/621).
   guessed), reconnects automatically on drop, and logs/saves/calls back
   every notification and write verbatim — no telemetry interpretation here.
   CLI: `revolt-ble-live`.
+- **Module 11 — Flutter SDK** ([flutter_sdk/](flutter_sdk/), Dart/`flutter_blue_plus`):
+  the mobile-side equivalent of Module 10 — `RevoltBleClient` with
+  `connect()`/`authenticate()`/`listen()`/`write()`/`disconnect()`, same
+  protocol, same raw-packets-only rule. Separate package/ecosystem (its own
+  `pubspec.yaml`), not part of the Python distribution.
 
 ## Roadmap (future milestones)
 
