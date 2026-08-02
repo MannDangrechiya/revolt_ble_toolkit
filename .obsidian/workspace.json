@@ -11,14 +11,10 @@
             "id": "c33a2464541daf21",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "RELEASE_AUDIT.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "RELEASE_AUDIT"
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
             }
           }
         ]
@@ -99,7 +95,6 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "RELEASE_AUDIT.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -118,7 +113,6 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "RELEASE_AUDIT.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
@@ -161,7 +155,6 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "RELEASE_AUDIT.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -190,19 +183,27 @@
   },
   "active": "c33a2464541daf21",
   "lastOpenFiles": [
-    "SECURITY_RELEASE_CHECKLIST.md.tmp.19672.09aa9c5cea0c",
-    "DEVELOPER_GUIDE.md.tmp.19672.be2b768cff0e",
+    "PROJECT_AUDIT.md",
+    "flutter_sdk/example/README.md",
+    "flutter_sdk/example/ios/Flutter/ephemeral/flutter_lldb_helper.py",
+    "flutter_sdk/example/analysis_options.yaml",
+    "tests/test_parsers/__pycache__/test_btsnoop_parser.cpython-312-pytest-9.1.1.pyc",
+    "tests/test_parsers/__pycache__/test_att_parser.cpython-312-pytest-9.1.1.pyc",
+    "src/revolt_ble_toolkit/live/__pycache__/models.cpython-312.pyc",
+    "src/revolt_ble_toolkit/live/__pycache__/client.cpython-312.pyc",
+    "src/revolt_ble_toolkit/live/__pycache__/__init__.cpython-312.pyc",
+    "src/revolt_ble_toolkit/live/__pycache__",
+    "tests/test_live/__pycache__/test_client.cpython-312-pytest-9.1.1.pyc",
+    "tests/test_live/__pycache__/__init__.cpython-312.pyc",
+    "RELEASE_CHECKLIST.md",
+    "CODE_OF_CONDUCT.md",
+    "SECURITY.md",
+    "CONTRIBUTING.md",
+    "docs/screenshots/main_window.png",
+    "CLEANUP_REPORT.md",
+    "RELEASE_AUDIT.md",
     "SECURITY_RELEASE_CHECKLIST.md",
-    "SECURITY_RELEASE_CHECKLIST.md.tmp.19672.9778715c7e6b",
     "HISTORY_SANITIZATION.md",
-    "HISTORY_SANITIZATION.md.tmp.19672.66f0f7d2a011",
-    "hook_test_clean.txt",
-    "hook_test.zip",
-    "hook_test_token.txt",
-    "hook_test_iccid.txt",
-    "hook_test_imei.txt",
-    "flutter_sdk - Copy/example/ios/Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage/Sources/FlutterGeneratedPluginSwiftPackage/FlutterGeneratedPluginSwiftPackage.swift",
-    "flutter_sdk - Copy/example/ios/Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage/Sources/FlutterGeneratedPluginSwiftPackage",
     "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md",
     "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@3x.png",
     "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@2x.png",
@@ -213,12 +214,9 @@
     "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@3x.png",
     "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@2x.png",
     "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@3x.png",
-    "flutter_sdk - Copy/example/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@2x.png",
     "flutter_sdk - Copy/example/README.md",
     "flutter_sdk - Copy/README.md",
     "flutter_sdk - Copy/CHANGELOG.md",
-    "PROJECT_AUDIT.md",
-    "RELEASE_AUDIT.md",
     "FINAL_STATUS.md",
     "Untitled.canvas",
     "flutter_sdk/example/ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md",
@@ -231,7 +229,6 @@
     "DEVELOPER_GUIDE.md",
     "CHANGELOG.md",
     "ARCHITECTURE.md",
-    "API_REFERENCE.md",
-    "docs/hci_parser.md"
+    "API_REFERENCE.md"
   ]
 }
