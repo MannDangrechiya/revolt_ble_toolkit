@@ -348,9 +348,10 @@ def test_state_machine_and_plugin_integration() -> None:
 
     async def scenario() -> None:
         await client.connect("AA:AA:AA:AA:AA:AA")
-        assert client.connection_state is ConnectionState.CONNECTED
+        state: ConnectionState = client.connection_state
+        assert state == ConnectionState.CONNECTED
         await client.disconnect()
-        assert client.connection_state is ConnectionState.DISCONNECTED
+        assert client.connection_state == ConnectionState.DISCONNECTED
 
     asyncio.run(scenario())
 
