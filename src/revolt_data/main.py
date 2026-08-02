@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -23,6 +24,32 @@ from revolt_data.workers.telemetry_worker import TelemetryWorker
 
 settings = get_settings()
 telemetry_worker = TelemetryWorker()
+
+
+def _get_cors_origins() -> list[str]:
+    """Parse allowed CORS origins from REVOLT_CORS_ORIGINS env var and REVOLT_ENV."""
+    raw_origins = os.environ.get("REVOLT_CORS_ORIGINS", "")
+    origins = [
+        o.strip()
+        for o in raw_origins.split(",")
+        if o.strip() and o.strip() != "*"
+    ]
+
+    is_dev = os.environ.get("REVOLT_ENV", "").lower() in ("dev", "development")
+    if is_dev:
+        localhost_origins = [
+            "http://localhost:3000",
+            "http://localhost:8000",
+            "http://localhost:5173",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:8000",
+            "http://127.0.0.1:5173",
+        ]
+        for origin in localhost_origins:
+            if origin not in origins:
+                origins.append(origin)
+
+    return origins
 
 
 @asynccontextmanager
@@ -49,7 +76,7 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=_get_cors_origins(),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
