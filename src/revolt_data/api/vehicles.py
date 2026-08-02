@@ -16,6 +16,7 @@ from revolt_data.models.vehicle import Vehicle
 from revolt_data.models.vehicle_status import VehicleStatus
 from revolt_data.schemas.vehicle import VehicleCreate, VehicleResponse
 from revolt_data.services.ble_manager import LiveBleManager
+from revolt_data.services.crypto import encrypt_token
 
 router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
 
@@ -26,7 +27,7 @@ async def create_vehicle(
     current_user: User = Depends(get_current_user),  # noqa: B008
     db: AsyncSession = Depends(get_db),  # noqa: B008
 ) -> Vehicle:
-    """Register a new vehicle for the authenticated user."""
+    """Register a new vehicle owned by current_user."""
     stmt = select(Vehicle).where(Vehicle.vin == vehicle_in.vin)
     existing = await db.execute(stmt)
     if existing.scalars().first():
@@ -42,7 +43,7 @@ async def create_vehicle(
         vin=vehicle_in.vin,
         name=vehicle_in.name,
         mac_address=vehicle_in.mac_address,
-        pairing_token=vehicle_in.pairing_token,
+        pairing_token=encrypt_token(vehicle_in.pairing_token),
     )
     status_obj = VehicleStatus(
         id=str(uuid4()),

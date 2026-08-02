@@ -9,6 +9,7 @@ from revolt_ble_toolkit.config.logging_config import get_logger
 from revolt_ble_toolkit.core.exceptions import LiveClientError
 from revolt_ble_toolkit.live import CommandRequest, ConnectionState, RevoltLiveClient
 from revolt_data.plugins.toolkit_plugin import RevoltDataBlePlugin
+from revolt_data.services.crypto import decrypt_token
 
 logger = get_logger(__name__)
 
@@ -69,9 +70,15 @@ class LiveBleManager:
         self._clients[vehicle_id] = client
         self._plugins[vehicle_id] = plugin
 
+        # Decrypt pairing token only at point of BLE connection
+        try:
+            raw_token = decrypt_token(pairing_token)
+        except Exception:
+            raw_token = pairing_token  # fallback if already raw string
+
         try:
             await client.connect(address=mac_address)
-            await client.pair(pairing_token)
+            await client.pair(raw_token)
         except LiveClientError as exc:
             logger.warning(
                 "Failed to connect/pair vehicle %s (%s): %s", vehicle_id, mac_address, exc
@@ -93,8 +100,13 @@ class LiveBleManager:
         char_uuid = client.control_characteristic_uuid
 
         if command_type == "PAIR":
-            token_val = token or "TOKEN123"
-            return await client.pair(token_val)
+            if not token:
+                raise ValueError("Pairing token is required; no fallback token is configured")
+            try:
+                plain_token = decrypt_token(token)
+            except Exception:
+                plain_token = token
+            return await client.pair(plain_token)
         elif command_type == "VS_ON":
             req = CommandRequest("cmd_vs_on", char_uuid, b"VS,ON")
             await client.enqueue_command(req)

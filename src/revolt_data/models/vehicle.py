@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 
 class Vehicle(Base):
-    """Revolt vehicle entity."""
+    """Revolt vehicle entity storing Fernet-encrypted pairing token at rest."""
 
     __tablename__ = "vehicles"
 
@@ -27,7 +27,7 @@ class Vehicle(Base):
     vin: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False, default="RV400")
     mac_address: Mapped[str] = mapped_column(String, nullable=False)
-    pairing_token: Mapped[str] = mapped_column(String, nullable=False)
+    pairing_token: Mapped[str] = mapped_column(String, nullable=False)  # Fernet encrypted ciphertext
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
