@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import hashlib
 from datetime import UTC, datetime, timedelta
 
+import bcrypt
 import jwt
 
 from revolt_data.config import get_settings
@@ -13,13 +13,21 @@ settings = get_settings()
 
 
 def hash_password(password: str) -> str:
-    """Hash password securely using SHA-256 for basic service auth."""
-    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+    """Hash password securely using bcrypt with proper salt."""
+    pwd_bytes = password.encode("utf-8")
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(pwd_bytes, salt)
+    return hashed.decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify plain password against hashed password."""
-    return hash_password(plain_password) == hashed_password
+    """Verify plain password against hashed password using bcrypt."""
+    try:
+        pwd_bytes = plain_password.encode("utf-8")
+        hash_bytes = hashed_password.encode("utf-8")
+        return bcrypt.checkpw(pwd_bytes, hash_bytes)
+    except Exception:
+        return False
 
 
 def create_access_token(user_id: str, expires_delta: timedelta | None = None) -> str:
