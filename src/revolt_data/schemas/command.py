@@ -6,9 +6,8 @@ from pydantic import BaseModel
 
 
 class VehicleCommandRequest(BaseModel):
-    command_type: str  # PAIR, VS_ON, VS_OFF, CUSTOM
+    command_type: str  # PAIR, VS_ON, VS_OFF
     token: str | None = None
-    custom_payload: str | None = None
 
 
 class VehicleCommandResponse(BaseModel):

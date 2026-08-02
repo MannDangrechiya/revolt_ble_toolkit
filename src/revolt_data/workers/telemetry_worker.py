@@ -88,9 +88,11 @@ class TelemetryWorker:
                 status.connection_state = data.new_state.name
                 if data.new_state.name == "AUTHENTICATED":
                     status.is_authenticated = True
+                    status.ignition_on = True
                 elif data.new_state.name in ("DISCONNECTED", "FAILED"):
                     status.is_authenticated = False
                     status.ignition_on = False
+                    await TripService.complete_active_trip_for_vehicle(session, vehicle_id)
 
             elif event_type == "DECODED_PAYLOAD":
                 if isinstance(data, DecodedBatteryStatus):
@@ -107,6 +109,8 @@ class TelemetryWorker:
 
                 elif isinstance(data, DecodedPairingResponse):
                     status.is_authenticated = data.success
+                    if data.success:
+                        status.ignition_on = True
                     record = TelemetryRecord(
                         id=str(uuid4()),
                         vehicle_id=vehicle_id,
@@ -117,6 +121,7 @@ class TelemetryWorker:
                     session.add(record)
 
                 elif isinstance(data, DecodedTelemetryFrame):
+                    status.ignition_on = True
                     record = TelemetryRecord(
                         id=str(uuid4()),
                         vehicle_id=vehicle_id,

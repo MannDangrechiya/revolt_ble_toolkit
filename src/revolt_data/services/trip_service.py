@@ -68,16 +68,34 @@ class TripService:
         trip: Trip,
         speed_kmh: float | None = None,
         battery_pct: int | None = None,
+        lat1: float | None = None,
+        lon1: float | None = None,
+        lat2: float | None = None,
+        lon2: float | None = None,
     ) -> None:
-        """Update metrics for an active trip."""
+        """Update metrics for an active trip, calculating distance using Haversine formula."""
         if battery_pct is not None:
             trip.end_battery_pct = battery_pct
 
         if speed_kmh is not None and speed_kmh > 0 and speed_kmh > trip.max_speed_kmh:
             trip.max_speed_kmh = round(speed_kmh, 1)
 
+        if lat1 is not None and lon1 is not None and lat2 is not None and lon2 is not None:
+            dist = calculate_haversine_distance(lat1, lon1, lat2, lon2)
+            trip.distance_km = round(trip.distance_km + dist, 2)
+
     @staticmethod
     async def complete_trip(session: AsyncSession, trip: Trip) -> None:
         """Mark active trip as completed."""
         trip.end_time = datetime.now(UTC)
         trip.status = "COMPLETED"
+
+    @staticmethod
+    async def complete_active_trip_for_vehicle(
+        session: AsyncSession, vehicle_id: str
+    ) -> Trip | None:
+        """Find and complete active trip for vehicle_id when ignition turns off."""
+        active = await TripService.get_active_trip(session, vehicle_id)
+        if active:
+            await TripService.complete_trip(session, active)
+        return active
