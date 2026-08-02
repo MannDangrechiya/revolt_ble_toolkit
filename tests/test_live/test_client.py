@@ -15,7 +15,15 @@ pytest.importorskip("bleak")
 from bleak.exc import BleakError
 
 from revolt_ble_toolkit.core.exceptions import LiveClientError
-from revolt_ble_toolkit.live import NotificationEvent, RevoltLiveClient, WriteEvent
+from revolt_ble_toolkit.live import (
+    BlePlugin,
+    CommandRequest,
+    ConnectionState,
+    ConnectionStateEvent,
+    NotificationEvent,
+    RevoltLiveClient,
+    WriteEvent,
+)
 from revolt_ble_toolkit.live import client as client_module
 
 _KNOWN_SERVICE = client_module.VEHICLE_CONTROL_SERVICE_UUID
@@ -319,3 +327,48 @@ def test_reconnect_retries_until_success(monkeypatch: pytest.MonkeyPatch) -> Non
         await client.disconnect()
 
     asyncio.run(scenario())
+
+
+def test_state_machine_and_plugin_integration() -> None:
+    _FakeClient.default_services = [_control_service(_KNOWN_CHAR, ["write", "notify"])]
+    state_events: list[ConnectionStateEvent] = []
+    client = RevoltLiveClient(on_state_change=state_events.append)
+
+    class TestPlugin(BlePlugin):
+        name = "TestPlugin"
+
+        def __init__(self) -> None:
+            self.states: list[ConnectionState] = []
+
+        def on_state_change(self, event: ConnectionStateEvent) -> None:
+            self.states.append(event.new_state)
+
+    plugin = TestPlugin()
+    client.register_plugin(plugin)
+
+    async def scenario() -> None:
+        await client.connect("AA:AA:AA:AA:AA:AA")
+        assert client.connection_state is ConnectionState.CONNECTED
+        await client.disconnect()
+        assert client.connection_state is ConnectionState.DISCONNECTED
+
+    asyncio.run(scenario())
+
+    assert ConnectionState.CONNECTED in plugin.states
+    assert ConnectionState.DISCONNECTED in plugin.states
+
+
+def test_enqueue_command_via_sdk() -> None:
+    _FakeClient.default_services = [_control_service(_KNOWN_CHAR, ["write", "notify"])]
+    client = RevoltLiveClient()
+
+    async def scenario() -> None:
+        await client.connect("AA:AA:AA:AA:AA:AA")
+        req = CommandRequest("cmd_sdk_1", _KNOWN_CHAR, b"\xaa\xbb")
+        await client.enqueue_command(req)
+        await client.disconnect()
+
+    asyncio.run(scenario())
+    assert _fake_of(client).writes == [(_KNOWN_CHAR, b"\xaa\xbb", True)]
+
+

@@ -1,116 +1,219 @@
-# API Reference
+# API_REFERENCE.md
 
-The public surface of each top-level package, as actually exported by its `__init__.py` (not inferred — copied from the real `__all__` lists). Import from the package, not the submodule, unless you have a specific reason not to (e.g. `from revolt_ble_toolkit.parsers import BtSnoopHciParser`, not `from revolt_ble_toolkit.parsers.btsnoop.parser import BtSnoopHciParser`).
+## `revolt_data` REST & WebSocket API Specification
 
-## `revolt_ble_toolkit.core`
+This document provides the full technical reference for `revolt_data`'s HTTP REST endpoints and real-time WebSocket protocol streams.
 
-```python
-ToolkitError            # base class for every toolkit-specific error
-ConfigurationError      # invalid/missing configuration (e.g. malformed TOML)
-ParsingError            # a capture file is structurally broken
-ExportError             # a report file couldn't be written
-LiveClientError         # BLE connection/discovery/pairing failure
+---
+
+## 1. Authentication & Headers
+
+All protected REST API endpoints require a valid JSON Web Token (JWT) supplied in the HTTP `Authorization` header:
+
+```http
+Authorization: Bearer <access_token>
 ```
 
-## `revolt_ble_toolkit.config`
+---
 
-```python
-AppSettings             # frozen dataclass: environment, debug, paths, logging
-PathSettings            # frozen dataclass: project_root, data_dir, log_dir, reports_dir
-LoggingSettings          # frozen dataclass: level, format, rotation
-get_settings(config_path: Path | None = None) -> AppSettings   # cached singleton
+## 2. API Endpoint Index
+
+| Method | Endpoint | Description | Auth Required |
+|---|---|---|---|
+| `POST` | `/auth/register` | Register a new user account | No |
+| `POST` | `/auth/login` | Authenticate credentials & receive JWT token | No |
+| `GET` | `/users/me` | Fetch authenticated user profile | Yes |
+| `POST` | `/vehicles` | Register a new Revolt RV400 motorcycle | Yes |
+| `GET` | `/vehicles` | List all vehicles owned by user | Yes |
+| `GET` | `/vehicles/{vehicle_id}` | Fetch vehicle metadata & connection status | Yes |
+| `POST` | `/vehicles/{vehicle_id}/connect` | Initiate live BLE connection via `revolt_ble_toolkit` | Yes |
+| `GET` | `/vehicles/{vehicle_id}/trips` | Retrieve ride history trips | Yes |
+| `GET` | `/vehicles/{vehicle_id}/telemetry` | Query decoded telemetry time-series records | Yes |
+| `POST` | `/vehicles/{vehicle_id}/commands` | Dispatch async BLE command (`PAIR`, `VS_ON`, `VS_OFF`) | Yes |
+| `WS` | `/ws/vehicles/{vehicle_id}` | Stream real-time telemetry events via WebSocket | Yes |
+
+---
+
+## 3. REST Endpoint Specifications
+
+### 3.1 Authentication
+
+#### `POST /auth/register`
+Registers a new user account.
+
+**Request Body** (`application/json`):
+```json
+{
+  "email": "rider@revolt.com",
+  "password": "SecurePassword123!",
+  "full_name": "Revolt Rider"
+}
 ```
 
-`revolt_ble_toolkit.config.logging_config` (imported directly, not re-exported at the package level):
-
-```python
-get_logger(name: str) -> logging.Logger
-configure_logging(settings: AppSettings | None = None) -> None
+**Response** (`201 Created`):
+```json
+{
+  "id": "u_8f3a12b0-4c12-4f81-9b12-3456789abcde",
+  "email": "rider@revolt.com",
+  "full_name": "Revolt Rider",
+  "is_active": true,
+  "is_superuser": false,
+  "created_at": "2026-08-01T22:45:00Z"
+}
 ```
 
-## `revolt_ble_toolkit.parsers`
+---
 
-```python
-BtSnoopHciParser         # .parse_file(path) -> Iterator[HciPacket]; .read_header(path)
-HciPacket                # frozen dataclass: number, timestamp, direction, packet_type, acl, ...
-AclHeader                # frozen dataclass: connection_handle, packet_boundary_flag, ...
-HciPacketType            # enum: COMMAND, ACL_DATA, SCO_DATA, EVENT, ISO_DATA, UNKNOWN
-PacketDirection          # enum: HOST_TO_CONTROLLER, CONTROLLER_TO_HOST
-BtSnoopFileHeader        # frozen dataclass: identification, version, datalink_type
+#### `POST /auth/login`
+Authenticates credentials and returns a JWT access token.
 
-AttParser                # .parse(hci_packets) -> Iterator[AttPacket]
-AttPacket                # frozen dataclass + .attribute_handle/.value/.exchanged_mtu properties
-AttOpcode                # enum: EXCHANGE_MTU_REQUEST/RESPONSE, READ_REQUEST, READ_RESPONSE,
-                         #   WRITE_REQUEST, WRITE_COMMAND, HANDLE_VALUE_NOTIFICATION/INDICATION,
-                         #   READ_BY_GROUP_TYPE_RESPONSE, READ_BY_TYPE_RESPONSE,
-                         #   FIND_INFORMATION_RESPONSE
+**Request Body** (`application/json`):
+```json
+{
+  "email": "rider@revolt.com",
+  "password": "SecurePassword123!"
+}
 ```
 
-## `revolt_ble_toolkit.analyzers`
-
-```python
-GattAnalyzer             # .analyze(att_packets) -> list[Service]
-Service                  # frozen dataclass: connection_handle, start/end_handle, uuid, characteristics
-Characteristic           # frozen dataclass: declaration/value_handle, uuid, properties, descriptors
-Descriptor               # frozen dataclass: handle, uuid
-CharacteristicProperty   # IntFlag: BROADCAST, READ, WRITE, WRITE_WITHOUT_RESPONSE, NOTIFY, ...
-
-ProtocolAnalyzer         # .classify(att_packets, services) -> list[ClassifiedPacket]
-ClassifiedPacket         # frozen dataclass: packet, category, confidence, reason
-PacketCategory           # enum: authentication, telemetry, configuration, heartbeat, firmware, unknown
-generate_report(classified: Sequence[ClassifiedPacket]) -> str
-
-CaptureComparator        # .compare(result1, result2) -> list[HandleDiff]
-compare_captures(path1, path2) -> list[HandleDiff]
-format_diff_report(diffs: list[HandleDiff]) -> str   # plain-text rendering, shared by CLI and GUI
-HandleDiff               # frozen dataclass + .changed_byte_offsets property
-CorrelationCategory      # enum: battery, voltage, temperature, gps, ride_mode, charging, unknown
+**Response** (`200 OK`):
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "expires_in": 86400
+}
 ```
 
-## `revolt_ble_toolkit.exporters`
+---
 
-```python
-generate_capture_report(btsnoop_path, out_dir) -> CaptureReportPaths
-CaptureReportPaths       # frozen dataclass: commands_csv, notifications_csv, statistics_json, summary_md
-PipelineResult           # re-exported from pipeline — see below
-build_statistics(btsnoop_path, result) -> dict[str, Any]
-run_pipeline(btsnoop_path) -> PipelineResult
+### 3.2 Vehicles
+
+#### `POST /vehicles`
+Registers a new Revolt motorcycle.
+
+**Request Body** (`application/json`):
+```json
+{
+  "vin": "MB1RV400012345678",
+  "name": "My RV400",
+  "mac_address": "AA:BB:CC:DD:EE:FF",
+  "pairing_token": "<TOKEN>"
+}
 ```
 
-## `revolt_ble_toolkit.pipeline`
-
-```python
-run_pipeline(btsnoop_path: str | Path) -> PipelineResult
-build_statistics(btsnoop_path, result: PipelineResult) -> dict[str, Any]
-PipelineResult           # frozen dataclass: hci_packets, att_packets, services, classified
+**Response** (`201 Created`):
+```json
+{
+  "id": "v_11223344-5566-7788-9900-aabbccddeeff",
+  "owner_id": "u_8f3a12b0-4c12-4f81-9b12-3456789abcde",
+  "vin": "MB1RV400012345678",
+  "name": "My RV400",
+  "mac_address": "AA:BB:CC:DD:EE:FF",
+  "created_at": "2026-08-01T22:46:00Z",
+  "status": {
+    "connection_state": "DISCONNECTED",
+    "is_authenticated": false,
+    "ignition_on": false,
+    "battery_percentage": 100,
+    "last_seen": "2026-08-01T22:46:00Z"
+  }
+}
 ```
 
-## `revolt_ble_toolkit.live` (optional `live` extra)
+---
 
-```python
-RevoltLiveClient(
-    name_filter: str = "RV400",
-    save_path: str | Path | None = None,
-    on_notification: Callable[[NotificationEvent], None] | None = None,
-    on_write: Callable[[WriteEvent], None] | None = None,
-)
-# async methods: .scan(), .connect(address=None), .write(uuid, data), .authenticate(token),
-#                .disconnect()
-# properties: .is_connected, .control_characteristic_uuid
+#### `POST /vehicles/{vehicle_id}/connect`
+Initiates a background BLE connection to the vehicle using `revolt_ble_toolkit.live.RevoltLiveClient`.
 
-NotificationEvent        # frozen dataclass: timestamp, characteristic_uuid, value
-WriteEvent               # frozen dataclass: timestamp, characteristic_uuid, value
+**Response** (`200 OK`):
+```json
+{
+  "vehicle_id": "v_11223344-5566-7788-9900-aabbccddeeff",
+  "connection_state": "CONNECTING"
+}
 ```
 
-## `revolt_ble_toolkit.cli.main`
+---
 
-```python
-main(argv: Sequence[str] | None = None) -> int    # entry point for `revolt-ble-toolkit`
-build_parser() -> argparse.ArgumentParser
+### 3.3 Commands
+
+#### `POST /vehicles/{vehicle_id}/commands`
+Dispatches a BLE command to the vehicle via `revolt_ble_toolkit`'s async write queue.
+
+**Request Body** (`application/json`):
+```json
+{
+  "command_type": "VS_ON",
+  "token": null
+}
 ```
 
-Subcommands: `parse <capture>`, `analyze <capture>`, `export <capture> [--out-dir DIR]`, `compare <capture1> <capture2>`.
+**Response** (`200 OK`):
+```json
+{
+  "command_id": "cmd_99887766-5544-3322-1100-ffeeddccbbaa",
+  "vehicle_id": "v_11223344-5566-7788-9900-aabbccddeeff",
+  "status": "EXECUTED",
+  "message": "Command VS_ON dispatched successfully"
+}
+```
 
-## `revolt_ble_toolkit.gui`
+---
 
-No importable API beyond `gui.app.main()` (the `revolt-ble-gui` entry point) — this package is an application, not a library surface. See `MODULE_REFERENCE.md`.
+### 3.4 Telemetry
+
+#### `GET /vehicles/{vehicle_id}/telemetry`
+Retrieves decoded telemetry records.
+
+**Query Parameters**:
+- `limit` (integer, default `100`): Maximum number of records to return.
+
+**Response** (`200 OK`):
+```json
+[
+  {
+    "id": "t_00112233-4455-6677-8899-aabbccddeeff",
+    "vehicle_id": "v_11223344-5566-7788-9900-aabbccddeeff",
+    "timestamp": "2026-08-01T22:47:00Z",
+    "event_type": "BATTERY_STATUS",
+    "battery_percentage": 85,
+    "latitude": null,
+    "longitude": null,
+    "speed_kmh": null,
+    "raw_payload": "Battery: 85%"
+  }
+]
+```
+
+---
+
+## 4. WebSocket Event Stream
+
+### `WS /ws/vehicles/{vehicle_id}`
+
+Establishes a persistent, bi-directional WebSocket connection streaming live vehicle events emitted by `revolt_ble_toolkit`.
+
+#### Broadcast Message Format (`JSON`)
+
+**State Transition Event**:
+```json
+{
+  "vehicle_id": "v_11223344-5566-7788-9900-aabbccddeeff",
+  "event_type": "STATE_CHANGE",
+  "payload_type": "ConnectionStateEvent",
+  "data": "ConnectionStateEvent(previous_state=CONNECTING, new_state=CONNECTED, reason='Connected to AA:BB:CC:DD:EE:FF')"
+}
+```
+
+**Decoded Telemetry Event**:
+```json
+{
+  "vehicle_id": "v_11223344-5566-7788-9900-aabbccddeeff",
+  "event_type": "DECODED_PAYLOAD",
+  "payload_type": "DecodedTelemetryFrame",
+  "data": "DecodedTelemetryFrame(timestamp=2026-08-01 22:47:00+00:00, raw_payload='LD,DEV123,12.34,56.78,1600000000', fields=['LD', 'DEV123', '12.34', '56.78', '1600000000'])"
+}
+```
+
+---
+*Generated for `revolt_data` FastAPI Backend Service.*
