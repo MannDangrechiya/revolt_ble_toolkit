@@ -6,6 +6,10 @@ dist/
 build/
 .eggs/
 
+# Databases & Environment
+*.db
+.env
+
 # Virtual environments
 .venv/
 venv/
