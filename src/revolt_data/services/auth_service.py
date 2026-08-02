@@ -12,6 +12,18 @@ from revolt_data.config import get_settings
 settings = get_settings()
 
 
+class TokenExpiredError(Exception):
+    """Raised when a JWT token signature has expired."""
+
+    pass
+
+
+class TokenInvalidError(Exception):
+    """Raised when a JWT token is invalid, malformed, or tampered with."""
+
+    pass
+
+
 def hash_password(password: str) -> str:
     """Hash password securely using bcrypt with proper salt."""
     pwd_bytes = password.encode("utf-8")
@@ -46,10 +58,20 @@ def create_access_token(user_id: str, expires_delta: timedelta | None = None) ->
     return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
 
 
-def decode_access_token(token: str) -> str | None:
-    """Decode and validate JWT access token returning user_id."""
+def decode_access_token(token: str) -> str:
+    """Decode and validate JWT access token returning user_id.
+
+    Raises:
+        TokenExpiredError: If token signature has expired.
+        TokenInvalidError: If token is malformed, invalid, or tampered with.
+    """
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
-        return payload.get("sub")
-    except Exception:
-        return None
+        sub = payload.get("sub")
+        if not sub:
+            raise TokenInvalidError("Token payload missing subject identifier")
+        return str(sub)
+    except jwt.ExpiredSignatureError as exc:
+        raise TokenExpiredError("Token has expired") from exc
+    except jwt.InvalidTokenError as exc:
+        raise TokenInvalidError("Invalid or tampered token") from exc

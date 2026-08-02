@@ -12,7 +12,11 @@ from revolt_ble_toolkit.config.logging_config import get_logger
 from revolt_data.database import AsyncSessionLocal
 from revolt_data.models.user import User
 from revolt_data.models.vehicle import Vehicle
-from revolt_data.services.auth_service import decode_access_token
+from revolt_data.services.auth_service import (
+    TokenExpiredError,
+    TokenInvalidError,
+    decode_access_token,
+)
 from revolt_data.services.ble_manager import LiveBleManager
 
 logger = get_logger(__name__)
@@ -88,9 +92,10 @@ async def vehicle_telemetry_ws(
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
-    user_id = decode_access_token(token)
-    if not user_id:
-        logger.warning("WebSocket connection rejected: Invalid or expired token for vehicle %s", vehicle_id)
+    try:
+        user_id = decode_access_token(token)
+    except (TokenExpiredError, TokenInvalidError) as exc:
+        logger.warning("WebSocket connection rejected: %s for vehicle %s", exc, vehicle_id)
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 

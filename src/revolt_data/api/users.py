@@ -9,7 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from revolt_data.database import get_db
 from revolt_data.models.user import User
 from revolt_data.schemas.user import UserResponse
-from revolt_data.services.auth_service import decode_access_token
+from revolt_data.services.auth_service import (
+    TokenExpiredError,
+    TokenInvalidError,
+    decode_access_token,
+)
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -26,12 +30,18 @@ async def get_current_user(
         )
 
     token = authorization.split(" ")[1]
-    user_id = decode_access_token(token)
-    if not user_id:
+    try:
+        user_id = decode_access_token(token)
+    except TokenExpiredError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired access token",
-        )
+            detail="Token has expired",
+        ) from exc
+    except TokenInvalidError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+        ) from exc
 
     stmt = select(User).where(User.id == user_id)
     res = await db.execute(stmt)
