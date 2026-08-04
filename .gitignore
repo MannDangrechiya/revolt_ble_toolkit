@@ -50,3 +50,13 @@ bugreport*.zip
 # OS
 .DS_Store
 Thumbs.db
+
+# Flutter & Database
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+*.db
+**/ephemeral/
+**/GeneratedPluginRegistrant.*
+
