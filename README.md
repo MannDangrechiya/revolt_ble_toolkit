@@ -7,11 +7,11 @@
 A professional toolkit for reverse engineering Bluetooth Low Energy (BLE) traffic
 captured in **Android HCI Snoop Logs**.
 
-> **Status: v1.0.0.** All modules complete: HCI/ATT parsing, GATT discovery,
+> **Status: Production Candidate (v1.0.0).** All modules complete: HCI/ATT parsing, GATT discovery,
 > heuristic protocol classification, cross-capture comparison, a desktop GUI,
 > a live BLE client, and a Flutter mobile SDK — all backed by a fully-wired
-> CLI. See [PROJECT_AUDIT.md](PROJECT_AUDIT.md) for the full v1.0
-> production-readiness audit, [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md)
+> CLI (covered by automated tests, pending Real Hardware Validation). See [PROJECT_AUDIT.md](PROJECT_AUDIT.md) for the full v1.0
+> documentation audit report, [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md)
 > for what's confirmed vs. heuristic vs. still unknown about the protocol,
 > and [ROADMAP.md](ROADMAP.md) for what's next.
 

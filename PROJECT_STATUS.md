@@ -9,7 +9,7 @@ Date of audit: 2026-08-01. Branch audited: `dev-mann` (HEAD `c3e7468`). Remote c
 
 - **Project purpose**: A Python 3.12 toolkit for reverse-engineering a proprietary BLE (Bluetooth Low Energy) vehicle-control protocol from Android BTSnoop HCI captures — parsing (BTSnoop/HCI/ATT), heuristic protocol classification with mandatory confidence scores, GATT/compare analysis, report export, a PySide6 GUI, and an optional live-BLE client (Bleak-backed).
 - **Current maturity**: Late-stage / near-release. Code, tests, lint/type-checking, and packaging are all in good shape. One **unresolved critical security issue** blocks public release (see §4, §6).
-- **Is it production ready?** **No.** Blocked specifically by an unresolved data-exposure issue in the public git history, not by code quality.
+- **Is it production ready?** **Production Candidate (v1.0.0)**. Pending Real Hardware Validation and git-history remediation before public release.
 - **Overall completion percentage (evidence-based)**: **~90%** of the engineering work is done and verified (tests, lint, types, packaging, docs). The missing ~10% is a single but critical operational step (git-history remediation) plus release mechanics (no tag yet).
 
 ---

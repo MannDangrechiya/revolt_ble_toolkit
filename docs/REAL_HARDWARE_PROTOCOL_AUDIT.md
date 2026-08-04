@@ -1,9 +1,9 @@
 # Real RV400 BLE Hardware Protocol Audit (`revolt_ble_toolkit`)
 
-This document provides the protocol audit and physical hardware validation reference for `revolt_ble_toolkit`.
+This document provides the protocol audit and Real Hardware Validation reference for `revolt_ble_toolkit`.
 
 > [!IMPORTANT]
-> **Validation Status**: All toolkit analyzers and CLI tests pass at 100% (170/170 tests, 92% coverage). Physical hardware measurements are marked as **"Pending Real Hardware Validation"**.
+> **Validation Status**: All toolkit analyzers and CLI tests pass (170/170 tests covered by automated tests, 92% code coverage). Physical hardware measurements are marked as **"Pending Real Hardware Validation"**.
 
 ---
 
@@ -18,6 +18,6 @@ This document provides the protocol audit and physical hardware validation refer
 
 ## 2. Validation Status
 
-* **Pytest Analyzer Pipeline**: 100% Pass Rate
-* **GATT / BTSnoop Parser**: Fully Operational
-* **Physical Hardware Field Validation**: Pending Real Hardware Validation
+* **Pytest Analyzer Pipeline**: Covered by automated tests
+* **GATT / BTSnoop Parser**: Implemented
+* **Real Hardware Validation**: Pending Real Hardware Validation
