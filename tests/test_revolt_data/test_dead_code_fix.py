@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import os
-import pytest
 
 os.environ.setdefault(
     "REVOLT_JWT_SECRET", "test_secret_key_that_is_at_least_32_bytes_long"
