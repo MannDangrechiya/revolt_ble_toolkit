@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+
 import pytest
 
 from revolt_data.main import _get_cors_origins, create_app

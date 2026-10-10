@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from datetime import timedelta
+
 import pytest
 
 # Mock REVOLT_JWT_SECRET before module imports

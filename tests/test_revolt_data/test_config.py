@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import pytest
 
 from revolt_data.config import Settings, get_settings

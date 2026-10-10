@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+
 import pytest
 from cryptography.fernet import Fernet
 
@@ -14,7 +15,6 @@ os.environ.setdefault(
     "REVOLT_JWT_SECRET", "test_secret_key_that_is_at_least_32_bytes_long"
 )
 
-from revolt_ble_toolkit.core.exceptions import LiveClientError
 from revolt_data.services.ble_manager import LiveBleManager
 from revolt_data.services.crypto import decrypt_token, encrypt_token
 
